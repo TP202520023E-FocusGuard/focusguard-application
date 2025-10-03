@@ -1,59 +1,99 @@
 <template>
-  <div class="site-list">
-    <h2 class="title">Clasificación de Sitios Web</h2>
+  <v-container fluid>
+    <v-card class="pa-4">
+      <v-card-title class="text-h6">
+        Clasificación de Sitios Web
+      </v-card-title>
 
-    <!-- Filtros -->
-    <div class="filters">
-      <button 
-        v-for="cat in categoriesFilter" 
-        :key="cat"
-        :class="{ active: selectedFilter === cat }"
-        @click="selectedFilter = cat"
+      <!-- Filtros -->
+      <v-btn-toggle
+        v-model="selectedFilter"
+        class="my-4"
+        divided
+        mandatory
       >
-        {{ cat }}
-      </button>
-    </div>
+        <v-btn
+          v-for="cat in categoriesFilter"
+          :key="cat"
+          :value="cat"
+          color="primary"
+          variant="outlined"
+        >
+          {{ cat }}
+        </v-btn>
+      </v-btn-toggle>
 
-    <!-- Tabla de sitios -->
-    <table>
-      <thead>
-        <tr>
-          <th>Dominio</th>
-          <th>Categoría</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="site in filteredSites" :key="site.id">
-          <td>{{ site.name }}</td>
-          <td>
-            <select v-model="site.category" @change="updateCategory(site)">
-              <option value="Sin Categoría">Sin Categoría</option>
-              <option value="Productivo">Productivo</option>
-              <option value="Neutral">Neutral</option>
-              <option value="Doble Filo">Doble Filo</option>
-              <option value="Distractor">Distractor</option>
-            </select>
-          </td>
-          <td>
-            <span :class="site.category.toLowerCase().replace(' ', '-')">{{ site.category }}</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+      <!-- Tabla de sitios -->
+      <v-data-table
+        :headers="headers"
+        :items="filteredSites"
+        class="elevation-1"
+        item-value="id"
+        density="comfortable"
+      >
+        <template #item.category="{ item }">
+          <v-select
+            v-model="item.category"
+            :items="categoryOptions"
+            density="compact"
+            variant="outlined"
+            hide-details
+            @update:model-value="() => updateCategory(item)"
+          />
+        </template>
+
+        <template #item.estado="{ item }">
+          <v-tooltip location="top">
+            <template #activator="{ props }">
+              <v-chip
+                v-bind="props"
+                :color="categoryColor(item.category)"
+                variant="flat"
+                class="text-white text-capitalize"
+                size="small"
+                prepend-icon="mdi-tag"
+                elevation="1"
+              >
+                {{ item.category }}
+              </v-chip>
+            </template>
+            <span>Categoría asignada: {{ item.category }}</span>
+          </v-tooltip>
+        </template>
+      </v-data-table>
+    </v-card>
+  </v-container>
 </template>
 
 <script>
-import axios from 'axios';
+import axios from "axios";
 
 export default {
   name: "SiteList",
   data() {
     return {
       sites: [],
-      categoriesFilter: ["Todos", "Sin Categoría", "Productivo", "Neutral", "Doble Filo", "Distractor"],
-      selectedFilter: "Todos"
+      selectedFilter: "Todos",
+      categoriesFilter: [
+        "Todos",
+        "Sin Categoría",
+        "Productivo",
+        "Neutral",
+        "Doble Filo",
+        "Distractor"
+      ],
+      headers: [
+        { title: "Dominio", value: "name" },
+        { title: "Categoría", value: "category" },
+        { title: "Estado", value: "estado" }
+      ],
+      categoryOptions: [
+        "Sin Categoría",
+        "Productivo",
+        "Neutral",
+        "Doble Filo",
+        "Distractor"
+      ]
     };
   },
   computed: {
@@ -78,6 +118,22 @@ export default {
       } catch (error) {
         console.error("Error actualizando categoría:", error);
       }
+    },
+    categoryColor(category) {
+      switch (category) {
+        case "Productivo":
+          return "green";
+        case "Neutral":
+          return "grey";
+        case "Doble Filo":
+          return "orange";
+        case "Distractor":
+          return "red";
+        case "Sin Categoría":
+          return "blue-grey";
+        default:
+          return "primary";
+      }
     }
   },
   mounted() {
@@ -85,75 +141,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-.site-list {
-  padding: 20px;
-  font-family: Arial, sans-serif;
-}
-
-.title {
-  font-size: 22px;
-  margin-bottom: 15px;
-  color: #333;
-}
-
-/* Filtros */
-.filters {
-  margin-bottom: 15px;
-}
-
-.filters button {
-  margin-right: 8px;
-  padding: 6px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background: #f5f5f5;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.filters button.active,
-.filters button:hover {
-  background: #1976d2;
-  color: #fff;
-  border-color: #1976d2;
-}
-
-/* Tabla */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-
-th, td {
-  border: 1px solid #ddd;
-  padding: 10px;
-  text-align: left;
-}
-
-th {
-  background-color: #f5f5f5;
-}
-
-/* Badge de categoría */
-td span {
-  padding: 3px 6px;
-  border-radius: 6px;
-  color: #fff;
-  font-weight: bold;
-}
-
-td span.productivo { background: #4caf50; }
-td span.neutral { background: #9e9e9e; }
-td span.doble-filo { background: #ff9800; }
-td span.distractor { background: #f44336; }
-td span.sin-categoría { background: #607d8b; }
-
-select {
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-</style>

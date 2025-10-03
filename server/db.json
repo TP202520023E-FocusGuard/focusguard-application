@@ -1,0 +1,9 @@
+{
+  "sites": [
+    { "id": 1, "name": "stackoverflow.com", "category": "Productivo" },
+    { "id": 2, "name": "youtube.com", "category": "Doble Filo" },
+    { "id": 3, "name": "facebook.com", "category": "Distractor" },
+    { "id": 4, "name": "unknownsite.com", "category": "Sin Categoría" },
+    { "id": 5, "name": "wikipedia.org", "category": "Neutral" }
+  ]
+}

@@ -1,25 +1,18 @@
 <template>
-  <div id="app" class="app-container">
-    <aside class="sidebar">
-      <h2>FocusGuard</h2>
-      <nav>
-        <ul>
-          <li><router-link to="/tracking">Tracking</router-link></li>
-          <li><router-link to="/users">Users</router-link></li>
-          <li><router-link to="/settings">Settings</router-link></li>
-        </ul>
-      </nav>
-    </aside>
-
-    <main class="main-content">
+  <v-app>
+    <Sidebar />
+    <v-main>
       <router-view />
-    </main>
-  </div>
+    </v-main>
+  </v-app>
 </template>
 
 <script>
+import Sidebar from "./shared/components/Sidebar.vue"; // ruta relativa
+import { menuItems } from "./shared/data/menu"; // Importa el menú
 export default {
   name: "App",
+  components: { Sidebar }
 };
 </script>
 
@@ -29,33 +22,10 @@ export default {
   height: 100vh;
 }
 
-.sidebar {
-  width: 200px;
-  background: #2c3e50;
-  color: white;
-  padding: 1rem;
-}
-
-.sidebar h2 {
-  margin-bottom: 1rem;
-}
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-
-.sidebar li {
-  margin: 0.5rem 0;
-}
-
-.sidebar a {
-  color: white;
-  text-decoration: none;
-}
-
 .main-content {
   flex: 1;
   padding: 2rem;
+  background-color: #f0f2f5;
+  overflow-y: auto;
 }
 </style>

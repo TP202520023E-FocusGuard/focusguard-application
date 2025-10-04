@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "FocusGuard",
+  "version": "1.0.0",
+  "description": "Sistema de gestión de procrastinación",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "FocusGuard"
+  },
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://localhost:3001/*"
+  ]
+}

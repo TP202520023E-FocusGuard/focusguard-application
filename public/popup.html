@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusGuard</title>
+  <style>
+    body {
+      width: 200px;
+      height: 120px;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+    }
+    .popup-container {
+      padding: 20px;
+      text-align: center;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+    }
+    .logo {
+      font-size: 2rem;
+    }
+    .dashboard-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid white;
+      border-radius: 25px;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+    }
+    .dashboard-btn:hover {
+      background: white;
+      color: #1e3c72;
+    }
+  </style>
+</head>
+<body>
+  <div class="popup-container">
+    <div class="logo">🛡️</div>
+    <button id="dashboardBtn" class="dashboard-btn">
+      Ver Dashboard
+    </button>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

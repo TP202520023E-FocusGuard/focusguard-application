@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "server": "json-server --watch server/db.json --routes server/routes.json --port 3001"
+    "server": "json-server --watch server/db.json --routes server/routes.json --port 3001",
+    "build:extension": "vite build && copy public\\manifest.json dist\\ && copy public\\popup.html dist\\ && copy public\\popup.js dist\\ && copy public\\dashboard.html dist\\",
+    "pack:extension": "npm run build:extension && powershell Compress-Archive -Path dist\\* -DestinationPath focusguard-extension.zip"
   },
   "dependencies": {
     "axios": "^1.12.2",

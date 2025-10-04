@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHashHistory, createWebHistory } from "vue-router";
 import TrackingPage from "../tracking/pages/TrackingPage.vue";
 import UserCategories from "../users/pages/UserCategories.vue";
 import LeisureTime from "../settings/pages/LeisureTime.vue";
@@ -15,7 +15,7 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes
 });
 

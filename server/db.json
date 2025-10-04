@@ -18,11 +18,7 @@
     {
       "id": 4,
       "name": "unknownsite.com",
-<<<<<<< Updated upstream
-      "category": "Sin Categoría"
-=======
       "category": "Doble Filo"
->>>>>>> Stashed changes
     },
     {
       "id": 5,
@@ -57,20 +53,12 @@
     {
       "id": 11,
       "name": "netflix.com",
-<<<<<<< Updated upstream
       "category": "Distractor"
-=======
-      "category": "Productivo"
->>>>>>> Stashed changes
     },
     {
       "id": 12,
       "name": "medium.com",
-<<<<<<< Updated upstream
       "category": "Productivo"
-=======
-      "category": "Sin Categoría"
->>>>>>> Stashed changes
     },
     {
       "id": 13,
@@ -87,8 +75,6 @@
       "name": "pinterest.com",
       "category": "Distractor"
     }
-<<<<<<< Updated upstream
-=======
   ],
   "categories": [
     {
@@ -126,6 +112,5 @@
       "name": "Peliculas y Series",
       "isProcrastination": false
     }
->>>>>>> Stashed changes
   ]
 }

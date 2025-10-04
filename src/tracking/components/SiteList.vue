@@ -1,73 +1,4 @@
 <template>
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-  <v-container fluid>
-    <v-card class="pa-4">
-      <v-card-title class="text-h6">
-        Clasificación de Sitios Web
-      </v-card-title>
-
-      <!-- Filtros -->
-      <v-btn-toggle
-        v-model="selectedFilter"
-        class="my-4"
-        divided
-        mandatory
-      >
-        <v-btn
-          v-for="cat in categoriesFilter"
-          :key="cat"
-          :value="cat"
-          color="primary"
-          variant="outlined"
-        >
-          {{ cat }}
-        </v-btn>
-      </v-btn-toggle>
-
-      <!-- Tabla de sitios -->
-      <v-data-table
-        :headers="headers"
-        :items="filteredSites"
-        class="elevation-1"
-        item-value="id"
-        density="comfortable"
-      >
-        <template #item.category="{ item }">
-          <v-select
-            v-model="item.category"
-            :items="categoryOptions"
-            density="compact"
-            variant="outlined"
-            hide-details
-            @update:model-value="() => updateCategory(item)"
-          />
-        </template>
-
-        <template #item.estado="{ item }">
-          <v-tooltip location="top">
-            <template #activator="{ props }">
-              <v-chip
-                v-bind="props"
-                :color="categoryColor(item.category)"
-                variant="flat"
-                class="text-white text-capitalize"
-                size="small"
-                prepend-icon="mdi-tag"
-                elevation="1"
-              >
-                {{ item.category }}
-              </v-chip>
-            </template>
-            <span>Categoría asignada: {{ item.category }}</span>
-          </v-tooltip>
-        </template>
-      </v-data-table>
-<<<<<<< Updated upstream
-=======
-=======
   <v-container fluid class="pa-4">
     <v-card class="elegant-card pa-4" elevation="2">
       <!-- Header mejorado -->
@@ -193,8 +124,6 @@
           </div>
         </div>
       </v-card>
->>>>>>> Stashed changes
->>>>>>> Stashed changes
     </v-card>
   </v-container>
 </template>
@@ -217,24 +146,6 @@ export default {
         "Distractor"
       ],
       headers: [
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-        { title: "Dominio", value: "name" },
-        { title: "Categoría", value: "category" },
-        { title: "Estado", value: "estado" }
-      ],
-      categoryOptions: [
-        "Sin Categoría",
-        "Productivo",
-        "Neutral",
-        "Doble Filo",
-        "Distractor"
-      ]
-<<<<<<< Updated upstream
-=======
-=======
         { title: "Dominio", value: "name", width: "40%" },
         { title: "Categoría", value: "category", width: "30%" },
         { title: "Estado", value: "estado", width: "30%" }
@@ -257,8 +168,8 @@ export default {
         'tiktok.com': { icon: 'mdi-music-note', color: '#000000', bg: '#F0F0F0', name: 'TikTok' },
         'whatsapp.com': { icon: 'mdi-whatsapp', color: '#25D366', bg: '#E6F7ED', name: 'WhatsApp' },
         
-        // Entretenimiento - ICONOS CORREGIDOS
-        'netflix.com': { icon: 'mdi-netflix', color: '#E50914', bg: '#FFE5E7', name: 'Netflix' },
+        // Entretenimiento
+        'netflix.com': { icon: 'mdi-television-play', color: '#E50914', bg: '#FFE5E7', name: 'Netflix' },
         'spotify.com': { icon: 'mdi-spotify', color: '#1DB954', bg: '#E6F7ED', name: 'Spotify' },
         'twitch.tv': { icon: 'mdi-twitch', color: '#9146FF', bg: '#F0E6FF', name: 'Twitch' },
         'discord.com': { icon: 'mdi-discord', color: '#5865F2', bg: '#E8EAFF', name: 'Discord' },
@@ -293,19 +204,11 @@ export default {
         // Default
         'default': { icon: 'mdi-earth', color: '#666666', bg: '#F5F5F5', name: 'Sitio Web' }
       }
->>>>>>> Stashed changes
->>>>>>> Stashed changes
     };
   },
   computed: {
     filteredSites() {
       if (this.selectedFilter === "Todos") return this.sites;
-<<<<<<< Updated upstream
-      return this.sites.filter(site => site.category === this.selectedFilter);
-=======
-<<<<<<< Updated upstream
-      return this.sites.filter(site => site.category === this.selectedFilter);
-=======
       if (this.selectedFilter === "Sin Categoría") {
         return this.sites.filter(site => !site.category || site.category === "Sin Categoría");
       }
@@ -321,8 +224,6 @@ export default {
         { label: "Categorizados", value: categorized, color: "green--text" },
         { label: "Productivos", value: productive, color: "success--text" }
       ];
->>>>>>> Stashed changes
->>>>>>> Stashed changes
     }
   },
   methods: {
@@ -337,42 +238,12 @@ export default {
     async updateCategory(site) {
       try {
         await axios.put(`http://localhost:3001/sites/${site.id}`, site);
-<<<<<<< Updated upstream
-        console.log(`El sitio ${site.name} fue actualizado a ${site.category}`);
-=======
-<<<<<<< Updated upstream
-        console.log(`El sitio ${site.name} fue actualizado a ${site.category}`);
-=======
         console.log(`Sitio ${site.name} actualizado a: ${site.category}`);
         this.$forceUpdate();
->>>>>>> Stashed changes
->>>>>>> Stashed changes
       } catch (error) {
         console.error("Error actualizando categoría:", error);
       }
     },
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-    categoryColor(category) {
-      switch (category) {
-        case "Productivo":
-          return "green";
-        case "Neutral":
-          return "grey";
-        case "Doble Filo":
-          return "orange";
-        case "Distractor":
-          return "red";
-        case "Sin Categoría":
-          return "blue-grey";
-        default:
-          return "primary";
-      }
-<<<<<<< Updated upstream
-=======
-=======
     
     // FUNCIÓN PRINCIPAL PARA EXTRAER DOMINIO Y ASIGNAR ICONO
     extractDomainName(fullUrl) {
@@ -392,28 +263,15 @@ export default {
     },
     
     getDomainInfo(domain) {
-      if (!domain) return this.domainPatterns.default;
-      
       const cleanDomain = this.extractDomainName(domain);
-      console.log('🔍 Analizando dominio:', domain, '->', cleanDomain);
       
-      // Buscar coincidencia EXACTA primero
-      for (const [pattern, info] of Object.entries(this.domainPatterns)) {
-        if (pattern !== 'default' && cleanDomain === pattern) {
-          console.log('✅ Coincidencia EXACTA:', pattern);
-          return info;
-        }
-      }
-      
-      // Si no hay coincidencia exacta, buscar parcial
+      // Buscar coincidencia exacta o parcial en los patrones
       for (const [pattern, info] of Object.entries(this.domainPatterns)) {
         if (pattern !== 'default' && cleanDomain.includes(pattern)) {
-          console.log('✅ Coincidencia PARCIAL:', pattern);
           return info;
         }
       }
       
-      console.log('❌ No se encontró coincidencia para:', cleanDomain);
       return this.domainPatterns.default;
     },
     
@@ -465,8 +323,6 @@ export default {
         "Distractor": "mdi-close-circle"
       };
       return icons[category] || "mdi-circle";
->>>>>>> Stashed changes
->>>>>>> Stashed changes
     }
   },
   mounted() {
@@ -474,10 +330,6 @@ export default {
   }
 };
 </script>
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-=======
 
 <style scoped>
 /* Tus estilos existentes se mantienen igual */
@@ -564,5 +416,3 @@ export default {
   }
 }
 </style>
->>>>>>> Stashed changes
->>>>>>> Stashed changes

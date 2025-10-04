@@ -169,7 +169,7 @@ export default {
         'whatsapp.com': { icon: 'mdi-whatsapp', color: '#25D366', bg: '#E6F7ED', name: 'WhatsApp' },
         
         // Entretenimiento
-        'netflix.com': { icon: 'mdi-television-play', color: '#E50914', bg: '#FFE5E7', name: 'Netflix' },
+        'netflix.com': { icon: 'mdi-netflix', color: '#E50914', bg: '#FFE5E7', name: 'Netflix' },
         'spotify.com': { icon: 'mdi-spotify', color: '#1DB954', bg: '#E6F7ED', name: 'Spotify' },
         'twitch.tv': { icon: 'mdi-twitch', color: '#9146FF', bg: '#F0E6FF', name: 'Twitch' },
         'discord.com': { icon: 'mdi-discord', color: '#5865F2', bg: '#E8EAFF', name: 'Discord' },
@@ -263,15 +263,28 @@ export default {
     },
     
     getDomainInfo(domain) {
-      const cleanDomain = this.extractDomainName(domain);
+      if (!domain) return this.domainPatterns.default;
       
-      // Buscar coincidencia exacta o parcial en los patrones
+      const cleanDomain = this.extractDomainName(domain);
+      console.log('🔍 Analizando dominio:', domain, '->', cleanDomain);
+      
+      // Buscar coincidencia EXACTA primero
       for (const [pattern, info] of Object.entries(this.domainPatterns)) {
-        if (pattern !== 'default' && cleanDomain.includes(pattern)) {
+        if (pattern !== 'default' && cleanDomain === pattern) {
+          console.log('✅ Coincidencia EXACTA:', pattern);
           return info;
         }
       }
       
+      // Si no hay coincidencia exacta, buscar parcial
+      for (const [pattern, info] of Object.entries(this.domainPatterns)) {
+        if (pattern !== 'default' && cleanDomain.includes(pattern)) {
+          console.log('✅ Coincidencia PARCIAL:', pattern);
+          return info;
+        }
+      }
+      
+      console.log('❌ No se encontró coincidencia para:', cleanDomain);
       return this.domainPatterns.default;
     },
     

@@ -3,11 +3,11 @@
     <v-card class="compact-card pa-4" elevation="2">
       <!-- Header compacto -->
       <div class="text-center mb-4">
-        <v-icon color="primary" size="48" class="mb-1">mdi-brain</v-icon>
-        <h2 class="text-h5 font-weight-bold primary--text mb-1">
+        <v-icon :color="themeStore.themeColors.primary" size="48" class="mb-1">mdi-brain</v-icon>
+        <h2 class="text-h5 font-weight-bold mb-1" :style="{ color: themeStore.themeColors.primary }">
           Categorías de Procrastinación
         </h2>
-        <p class="text-caption text--secondary">
+        <p class="text-caption" :style="{ color: themeStore.themeColors.textSecondary }">
           Marca las categorías que consideras procrastinación/ocio
         </p>
       </div>
@@ -37,13 +37,8 @@
                   {{ category.isProcrastination ? 'mdi-check-circle' : 'mdi-circle-outline' }}
                 </v-icon>
                 <span 
-                  :class="[
-                    'text-body-2', 
-                    'ml-2',
-                    'compact-text',
-                    category.isProcrastination ? 'white--text' : 'text--primary'
-                  ]"
-                  :style="category.isProcrastination ? 'color: white !important;' : ''"
+                  class="text-body-2 ml-2 compact-text"
+                  :class="category.isProcrastination ? 'text-white' : ''"
                 >
                   {{ category.name }}
                 </span>
@@ -66,7 +61,7 @@
       <!-- Botón compacto -->
       <v-card-actions class="justify-center mt-4 pt-2">
         <v-btn 
-          color="primary" 
+          :color="themeStore.themeColors.primary" 
           size="large"
           :class="['compact-btn', 'elevation-2']"
           @click="handleSave"
@@ -88,7 +83,7 @@
     >
       <div class="d-flex align-center">
         <v-icon color="white" size="20" class="mr-2">mdi-check</v-icon>
-        <span class="text-caption">
+        <span class="text-caption text-white">
           <strong>{{ lastUpdatedCategory }}</strong> {{ lastAction }}
         </span>
       </div>
@@ -98,6 +93,8 @@
 
 <script>
 import axios from 'axios';
+import { useThemeStore } from '../../stores/themeStore';
+import { mapStores } from 'pinia';
 
 export default {
   name: 'CategoryList',
@@ -113,6 +110,9 @@ export default {
       lastUpdatedCategory: '',
       lastAction: 'seleccionada'
     };
+  },
+  computed: {
+    ...mapStores(useThemeStore)
   },
   methods: {
     async updateCategory(category) {
@@ -163,10 +163,16 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
+/* SOLO EL GRADIENTE CAMBIA CON EL TEMA - texto siempre normal */
 .selected-compact {
-  background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%) !important;
-  border-color: #1565c0 !important;
-  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3) !important;
+  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%) !important;
+  border-color: var(--theme-primary) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Texto en seleccionados - SIEMPRE BLANCO */
+.selected-compact .compact-text {
+  color: white !important;
 }
 
 .unselected-compact {
@@ -175,8 +181,13 @@ export default {
 }
 
 .unselected-compact:hover {
-  border-color: #1976d2;
+  border-color: var(--theme-primary);
   background: #f5f9ff;
+}
+
+/* Texto en no seleccionados - SIEMPRE NORMAL */
+.unselected-compact .compact-text {
+  color: #1e293b !important; /* Color fijo normal */
 }
 
 .compact-checkbox {

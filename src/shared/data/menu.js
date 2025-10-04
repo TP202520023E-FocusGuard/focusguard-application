@@ -23,6 +23,11 @@ export const menuItems = [
         name: "Tiempo de Ocio",
         route: "/settings/leisure-time",
         icon: "mdi-timer-sand"
+      },
+      {
+        name: "Apariencia",
+        route: "/settings/appearance",
+        icon: "mdi-palette"
       }
     ]
   },

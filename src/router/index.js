@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import TrackingPage from "../tracking/pages/TrackingPage.vue";
 import UserCategories from "../users/pages/UserCategories.vue";
 import LeisureTime from "../settings/pages/LeisureTime.vue";
+import ThemeSelector from "../components/ThemeSelector.vue";
 
 const routes = [
   { path: "/", redirect: "/tracking" },
@@ -9,7 +10,8 @@ const routes = [
   { path: "/settings/categories", redirect: "/tracking" },
   { path: "/settings/leisure-time", component: LeisureTime },
   { path: "/profile", redirect: "/tracking" },
-  { path: "/profile/categories", component: UserCategories }
+  { path: "/profile/categories", component: UserCategories },
+  { path: "/settings/appearance", component: ThemeSelector }
 ];
 
 const router = createRouter({

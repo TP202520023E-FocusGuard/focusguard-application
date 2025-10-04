@@ -18,7 +18,11 @@
     {
       "id": 4,
       "name": "unknownsite.com",
+<<<<<<< Updated upstream
       "category": "Sin Categoría"
+=======
+      "category": "Doble Filo"
+>>>>>>> Stashed changes
     },
     {
       "id": 5,
@@ -53,12 +57,20 @@
     {
       "id": 11,
       "name": "netflix.com",
+<<<<<<< Updated upstream
       "category": "Distractor"
+=======
+      "category": "Productivo"
+>>>>>>> Stashed changes
     },
     {
       "id": 12,
       "name": "medium.com",
+<<<<<<< Updated upstream
       "category": "Productivo"
+=======
+      "category": "Sin Categoría"
+>>>>>>> Stashed changes
     },
     {
       "id": 13,
@@ -75,5 +87,45 @@
       "name": "pinterest.com",
       "category": "Distractor"
     }
+<<<<<<< Updated upstream
+=======
+  ],
+  "categories": [
+    {
+      "id": 1,
+      "name": "Gaming",
+      "isProcrastination": false
+    },
+    {
+      "id": 2,
+      "name": "Streaming",
+      "isProcrastination": false
+    },
+    {
+      "id": 3,
+      "name": "Noticias",
+      "isProcrastination": false
+    },
+    {
+      "id": 4,
+      "name": "Deportes",
+      "isProcrastination": false
+    },
+    {
+      "id": 5,
+      "name": "Podcasts",
+      "isProcrastination": false
+    },
+    {
+      "id": 6,
+      "name": "Fitness",
+      "isProcrastination": false
+    },
+    {
+      "id": 7,
+      "name": "Peliculas y Series",
+      "isProcrastination": false
+    }
+>>>>>>> Stashed changes
   ]
 }

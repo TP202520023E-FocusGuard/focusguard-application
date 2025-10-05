@@ -56,7 +56,7 @@
             </template>
           </v-list-item>
 
-          <transition name="slide-down">
+          <transition name="menu-expand" @enter="onMenuExpand" @leave="onMenuCollapse">
             <div v-if="openStates[item.name]" class="submenu-container">
               <v-list-item
                 v-for="(child, cIndex) in item.children"
@@ -133,8 +133,8 @@
 
       <v-btn
         class="logout-btn"
-        variant="tonal"
-        color="red-darken-1"
+        variant="flat"
+        color="error"
         size="large"
         block
         @click="handleLogout"
@@ -158,7 +158,8 @@ export default {
   data() {
     return {
       menuItems,
-      openStates: {}
+      openStates: {},
+      closingMenu: null
     };
   },
   setup() {
@@ -222,21 +223,49 @@ export default {
   },
   methods: {
     toggleMenu(menuName) {
-      const newState = { ...this.openStates };
-
-      if (newState[menuName]) {
-        newState[menuName] = false;
-      } else {
-        Object.keys(newState).forEach(key => {
-          newState[key] = false;
-        });
-        newState[menuName] = true;
+      const wasOpen = this.openStates[menuName];
+      
+      // Si el menú ya está abierto, lo cerramos
+      if (wasOpen) {
+        this.openStates[menuName] = false;
+        return;
       }
 
+      // Cerramos solo los otros menús, manteniendo el actual si está abierto
+      const newState = { ...this.openStates };
+      Object.keys(newState).forEach(key => {
+        if (key !== menuName) {
+          newState[key] = false;
+        }
+      });
+      
+      // Abrimos el nuevo menú
+      newState[menuName] = true;
       this.openStates = newState;
     },
 
-    handleSubmenuClick() {},
+    onMenuExpand(el) {
+      el.style.height = '0';
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(-10px)';
+      
+      requestAnimationFrame(() => {
+        el.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        el.style.height = el.scrollHeight + 'px';
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      });
+    },
+
+    onMenuCollapse(el) {
+      el.style.transition = 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+      el.style.height = '0';
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(-10px)';
+    },
+
+    handleSubmenuClick() {
+    },
 
     closeAllMenus() {
       const newState = {};
@@ -316,7 +345,29 @@ export default {
 .menu-item {
   border-radius: 12px;
   margin-bottom: 6px;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.menu-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.1), 
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.menu-item:hover::before {
+  left: 100%;
 }
 
 .menu-item:hover {
@@ -326,10 +377,12 @@ export default {
 
 .active-item {
   background: var(--sidebar-accent-25, rgba(76, 161, 175, 0.25)) !important;
+  border-left: 3px solid var(--sidebar-accent) !important;
 }
 
 .active-group {
-  background: var(--sidebar-accent-15, rgba(76, 161, 175, 0.15));
+  background: var(--sidebar-accent-15, rgba(76, 161, 175, 0.15)) !important;
+  border-left: 3px solid var(--sidebar-accent) !important;
 }
 
 .icon-wrapper {
@@ -340,46 +393,110 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.menu-item:hover .icon-wrapper {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
 }
 
 .menu-icon {
   color: rgba(255, 255, 255, 0.85);
+  transition: all 0.3s ease;
 }
 
 .active-icon {
-  color: var(--sidebar-accent, #4ca1af);
+  color: white !important;
+  background: linear-gradient(135deg, var(--sidebar-accent), var(--sidebar-accent-90)) !important;
+  border-radius: 10px !important;
+  padding: 4px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
 }
 
 .menu-title {
   font-weight: 500;
   letter-spacing: 0.3px;
+  transition: all 0.3s ease;
 }
 
 .arrow-icon {
-  transition: transform 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .rotate-arrow {
   transform: rotate(180deg);
+  color: var(--sidebar-accent) !important;
 }
 
+/* Transiciones optimizadas para submenús */
 .submenu-container {
   padding-left: 12px;
+  overflow: hidden;
+}
+
+.menu-expand-enter-active,
+.menu-expand-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.menu-expand-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+  height: 0;
+}
+
+.menu-expand-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+  height: 0;
 }
 
 .submenu-item {
   border-radius: 10px;
   margin: 4px 0;
   padding-left: 12px;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.submenu-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.05), 
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.submenu-item:hover::before {
+  left: 100%;
 }
 
 .submenu-item:hover {
   background: var(--sidebar-accent-18, rgba(76, 161, 175, 0.18));
+  transform: translateX(4px);
 }
 
 .active-subitem {
   background: var(--sidebar-accent-25, rgba(76, 161, 175, 0.25)) !important;
   color: white !important;
+  border-left: 2px solid var(--sidebar-accent) !important;
+  margin-left: 8px;
+}
+
+.active-subitem .submenu-dot {
+  background: white !important;
+  box-shadow: 0 0 8px var(--sidebar-accent) !important;
+  transform: scale(1.2);
 }
 
 .submenu-indicator {
@@ -394,14 +511,27 @@ export default {
   height: 6px;
   border-radius: 50%;
   background: var(--sidebar-accent-90, rgba(76, 161, 175, 0.9));
+  transition: all 0.3s ease;
 }
 
 .submenu-title {
   font-size: 14px;
+  transition: all 0.3s ease;
 }
 
 .submenu-icon {
   color: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.submenu-item:hover .submenu-icon {
+  color: rgba(255, 255, 255, 0.8);
+  transform: scale(1.1);
+}
+
+.menu-divider {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  margin: 8px 0;
 }
 
 .sidebar-footer {
@@ -420,6 +550,12 @@ export default {
 
 .user-avatar {
   border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .user-name {
@@ -439,9 +575,86 @@ export default {
   height: 8px;
   border-radius: 50%;
   background: #4caf50;
+  animation: pulse 2s infinite;
 }
 
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Botón de cerrar sesión */
 .logout-btn {
-  font-weight: 600;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  background: linear-gradient(135deg, #f44336, #d32f2f) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 
+    0 4px 14px rgba(244, 67, 54, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  height: 48px !important;
+  border-radius: 12px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.logout-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.2), 
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.logout-btn:hover {
+  background: linear-gradient(135deg, #ff5252, #e53935) !important;
+  box-shadow: 
+    0 6px 20px rgba(244, 67, 54, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+.logout-btn:hover::before {
+  left: 100%;
+}
+
+.logout-btn:active {
+  transform: translateY(0) !important;
+  box-shadow: 
+    0 2px 8px rgba(244, 67, 54, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.logout-btn :deep(.v-icon) {
+  color: white !important;
+}
+
+.logout-btn:hover :deep(.v-btn__content) {
+  filter: brightness(1.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .logout-btn {
+    height: 44px !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .sidebar-header {
+    padding: 20px 16px 12px;
+  }
+  
+  .sidebar-footer {
+    padding: 20px;
+  }
 }
 </style>

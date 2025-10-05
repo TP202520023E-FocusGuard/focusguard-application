@@ -56,54 +56,44 @@
             </div>
           </template>
 
-          <!-- Columna Categoría -->
           <template #item.category="{ item }">
-            <v-select
-              v-model="item.category"
-              :items="categoryOptions"
-              item-title="title"
-              item-value="value"
-              density="compact"
-              variant="outlined"
-              hide-details
-              :color="categoryColor(item.category)"
-              @update:model-value="() => updateCategory(item)"
-              class="category-select"
-              :prepend-icon="getCategoryIcon(item.category)"
-            >
-              <template #item="{ props, item: option }">
-                <v-list-item class="list-item" v-bind="props">
-                  <template #prepend>
-                    <v-icon :color="categoryColor(option.value)" size="small">
-                      {{ getCategoryIcon(option.value) }}
-                    </v-icon>
-                  </template>
-                </v-list-item>
-              </template>
-            </v-select>
-          </template>
-
-          <!-- Columna Estado -->
-          <template #item.estado="{ item }">
-            <v-tooltip location="top">
-              <template #activator="{ props }">
-                <v-chip
+            <v-menu location="bottom" :close-on-content-click="true">
+              <template v-slot:activator="{ props }">
+                <v-btn 
                   v-bind="props"
+                  variant="outlined"
+                  density="compact"
                   :color="categoryColor(item.category)"
-                  variant="flat"
-                  class="text-white font-weight-medium"
-                  size="small"
                   :prepend-icon="getCategoryIcon(item.category)"
-                  elevation="1"
-                  :class="`category-chip ${item.category.toLowerCase().replace(' ', '-')}`"
+                  class="category-btn"
                 >
                   {{ item.category }}
-                </v-chip>
+                  <v-icon end>mdi-chevron-down</v-icon>
+                </v-btn>
               </template>
-              <span>Categoría: {{ item.category }}</span>
-            </v-tooltip>
+              
+              <v-card width="220" class="category-menu-card">
+                <v-list density="compact" class="category-menu-list">
+                  <v-list-item
+                    v-for="option in categoryOptions"
+                    :key="option.value"
+                    @click="updateSiteCategory(item, option.value)"
+                    :class="{ 'active-category': item.category === option.value }"
+                    class="category-menu-item"
+                  >
+                    <template #prepend>
+                      <v-icon :color="categoryColor(option.value)" size="small">
+                        {{ getCategoryIcon(option.value) }}
+                      </v-icon>
+                    </template>
+                    <v-list-item-title class="category-menu-title">
+                      {{ option.title }}
+                    </v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-card>
+            </v-menu>
           </template>
-
           <!-- Empty state -->
           <template #no-data>
             <div class="text-center py-8">
@@ -146,9 +136,8 @@ export default {
         "Distractor"
       ],
       headers: [
-        { title: "Dominio", value: "name", width: "40%" },
-        { title: "Categoría", value: "category", width: "30%" },
-        { title: "Estado", value: "estado", width: "30%" }
+        { title: "Dominio", value: "name", width: "60%" },
+        { title: "Categoría", value: "category", width: "40%" }
       ],
       categoryOptions: [
         { title: "Sin Categoría", value: "Sin Categoría" },
@@ -169,7 +158,7 @@ export default {
         'whatsapp.com': { icon: 'mdi-whatsapp', color: '#25D366', bg: '#E6F7ED', name: 'WhatsApp' },
         
         // Entretenimiento
-        'netflix.com': { icon: 'mdi-netflix', color: '#E50914', bg: '#FFE5E7', name: 'Netflix' },
+        'netflix.com': { icon: 'mdi-television-play', color: '#E50914', bg: '#FFE5E7', name: 'Netflix' },
         'spotify.com': { icon: 'mdi-spotify', color: '#1DB954', bg: '#E6F7ED', name: 'Spotify' },
         'twitch.tv': { icon: 'mdi-twitch', color: '#9146FF', bg: '#F0E6FF', name: 'Twitch' },
         'discord.com': { icon: 'mdi-discord', color: '#5865F2', bg: '#E8EAFF', name: 'Discord' },
@@ -235,8 +224,9 @@ export default {
         console.error("Error cargando sitios:", error);
       }
     },
-    async updateCategory(site) {
+    async updateSiteCategory(site, newCategory) {
       try {
+        site.category = newCategory;
         await axios.put(`http://localhost:3001/sites/${site.id}`, site);
         console.log(`Sitio ${site.name} actualizado a: ${site.category}`);
         this.$forceUpdate();
@@ -266,12 +256,10 @@ export default {
       if (!domain) return this.domainPatterns.default;
       
       const cleanDomain = this.extractDomainName(domain);
-      console.log('🔍 Analizando dominio:', domain, '->', cleanDomain);
       
       // Buscar coincidencia EXACTA primero
       for (const [pattern, info] of Object.entries(this.domainPatterns)) {
         if (pattern !== 'default' && cleanDomain === pattern) {
-          console.log('✅ Coincidencia EXACTA:', pattern);
           return info;
         }
       }
@@ -279,12 +267,10 @@ export default {
       // Si no hay coincidencia exacta, buscar parcial
       for (const [pattern, info] of Object.entries(this.domainPatterns)) {
         if (pattern !== 'default' && cleanDomain.includes(pattern)) {
-          console.log('✅ Coincidencia PARCIAL:', pattern);
           return info;
         }
       }
       
-      console.log('❌ No se encontró coincidencia para:', cleanDomain);
       return this.domainPatterns.default;
     },
     
@@ -310,7 +296,7 @@ export default {
         "Neutral": "grey",
         "Doble Filo": "warning",
         "Distractor": "error",
-        "Sin Categoria": "blue-grey"
+        "Sin Categoría": "blue-grey"
       };
       return colors[category] || "primary";
     },
@@ -321,7 +307,7 @@ export default {
         "Neutral": "mdi-minus-circle",
         "Doble Filo": "mdi-alert-circle",
         "Distractor": "mdi-close-circle",
-        "Sin Categoria": "mdi-help-circle"
+        "Sin Categoría": "mdi-help-circle"
       };
       return icons[category] || "mdi-help-circle";
     },
@@ -329,7 +315,7 @@ export default {
     getFilterIcon(category) {
       const icons = {
         "Todos": "mdi-view-dashboard",
-        "Sin Categoria": "mdi-help-circle",
+        "Sin Categoría": "mdi-help-circle",
         "Productivo": "mdi-check-circle",
         "Neutral": "mdi-minus-circle",
         "Doble Filo": "mdi-alert-circle",
@@ -345,7 +331,6 @@ export default {
 </script>
 
 <style scoped>
-/* Tus estilos existentes se mantienen igual */
 .elegant-card {
   border-radius: 12px;
   max-width: 100%;
@@ -353,7 +338,7 @@ export default {
 
 .filter-chip {
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease;
   font-weight: 500;
 }
 
@@ -365,12 +350,14 @@ export default {
   border-radius: 8px;
 }
 
-.category-select {
-  min-width: 140px;
+.category-btn {
+  min-width: 140px !important;
+  justify-content: start !important;
+  transition: all 0.2s ease;
 }
 
-.list-item {
-  background-color: #fff;
+.category-btn:hover {
+  transform: scale(1.05);
 }
 
 .stat-item {
@@ -381,6 +368,54 @@ export default {
   gap: 8px;
 }
 
+/* ESTILOS PARA EL NUEVO DROPDOWN CON v-menu */
+:deep(.category-menu-card) {
+  background: white !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+:deep(.category-menu-list) {
+  background: white !important;
+  border-radius: 8px !important;
+  padding: 4px 0 !important;
+}
+
+:deep(.category-menu-item) {
+  background: white !important;
+  min-height: 40px !important;
+  border-radius: 4px !important;
+  margin: 2px 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+:deep(.category-menu-item:hover) {
+  background: #f8f9fa !important;
+  transform: translateX(2px);
+}
+
+:deep(.active-category) {
+  background: #e3f2fd !important;
+  color: #1976d2 !important;
+}
+
+:deep(.category-menu-title) {
+  color: #333 !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+}
+
+:deep(.active-category .category-menu-title) {
+  color: #1976d2 !important;
+  font-weight: 600 !important;
+}
+
+/* Asegurar que el overlay funcione correctamente */
+:deep(.v-overlay__content) {
+  z-index: 9999 !important;
+}
 
 /* Responsive */
 @media (max-width: 960px) {
@@ -402,6 +437,11 @@ export default {
   .d-flex.justify-space-around {
     flex-direction: column;
     gap: 8px;
+  }
+  
+  .category-btn {
+    min-width: 120px !important;
+    font-size: 0.8rem !important;
   }
 }
 </style>

@@ -72,7 +72,7 @@
               :prepend-icon="getCategoryIcon(item.category)"
             >
               <template #item="{ props, item: option }">
-                <v-list-item v-bind="props">
+                <v-list-item class="list-item" v-bind="props">
                   <template #prepend>
                     <v-icon :color="categoryColor(option.value)" size="small">
                       {{ getCategoryIcon(option.value) }}
@@ -310,7 +310,7 @@ export default {
         "Neutral": "grey",
         "Doble Filo": "warning",
         "Distractor": "error",
-        "Sin Categoría": "blue-grey"
+        "Sin Categoria": "blue-grey"
       };
       return colors[category] || "primary";
     },
@@ -321,7 +321,7 @@ export default {
         "Neutral": "mdi-minus-circle",
         "Doble Filo": "mdi-alert-circle",
         "Distractor": "mdi-close-circle",
-        "Sin Categoría": "mdi-help-circle"
+        "Sin Categoria": "mdi-help-circle"
       };
       return icons[category] || "mdi-help-circle";
     },
@@ -329,7 +329,7 @@ export default {
     getFilterIcon(category) {
       const icons = {
         "Todos": "mdi-view-dashboard",
-        "Sin Categoría": "mdi-help-circle",
+        "Sin Categoria": "mdi-help-circle",
         "Productivo": "mdi-check-circle",
         "Neutral": "mdi-minus-circle",
         "Doble Filo": "mdi-alert-circle",
@@ -365,16 +365,12 @@ export default {
   border-radius: 8px;
 }
 
-.category-chip {
-  transition: all 0.2s ease;
-}
-
-.category-chip:hover {
-  transform: scale(1.05);
-}
-
 .category-select {
   min-width: 140px;
+}
+
+.list-item {
+  background-color: #fff;
 }
 
 .stat-item {
@@ -385,26 +381,6 @@ export default {
   gap: 8px;
 }
 
-/* Estilos específicos para cada categoría */
-.category-chip.sin-categoría {
-  background: linear-gradient(135deg, #78909c, #546e7a) !important;
-}
-
-.category-chip.productivo {
-  background: linear-gradient(135deg, #4caf50, #2e7d32) !important;
-}
-
-.category-chip.neutral {
-  background: linear-gradient(135deg, #9e9e9e, #757575) !important;
-}
-
-.category-chip.doble-filo {
-  background: linear-gradient(135deg, #ff9800, #f57c00) !important;
-}
-
-.category-chip.distractor {
-  background: linear-gradient(135deg, #f44336, #c62828) !important;
-}
 
 /* Responsive */
 @media (max-width: 960px) {

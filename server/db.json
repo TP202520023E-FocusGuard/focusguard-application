@@ -3,7 +3,7 @@
     {
       "id": 1,
       "name": "stackoverflow.com",
-      "category": "Productivo"
+      "category": "Distractor"
     },
     {
       "id": 2,
@@ -13,7 +13,7 @@
     {
       "id": 3,
       "name": "facebook.com",
-      "category": "Distractor"
+      "category": "Productivo"
     },
     {
       "id": 4,
@@ -38,7 +38,7 @@
     {
       "id": 8,
       "name": "linkedin.com",
-      "category": "Productivo"
+      "category": "Neutral"
     },
     {
       "id": 9,

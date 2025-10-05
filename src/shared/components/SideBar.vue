@@ -5,6 +5,7 @@
     class="modern-sidebar"
     elevation="3"
     width="280"
+    :style="sidebarStyles"
   >
     <div class="sidebar-header">
       <div class="logo-container">
@@ -146,8 +147,10 @@
 </template>
 
 <script>
+import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../../stores/authStore";
+import { useThemeStore } from "../../stores/themeStore";
 import { menuItems } from "../data/menu.js";
 
 export default {
@@ -161,6 +164,50 @@ export default {
   setup() {
     const router = useRouter();
     const authStore = useAuthStore();
+    const themeStore = useThemeStore();
+
+    const hexToRgba = (hex, alpha) => {
+      if (!hex) return `rgba(76, 161, 175, ${alpha})`;
+
+      if (hex.startsWith("rgb")) {
+        const values = hex.match(/\d+/g);
+        if (values && values.length >= 3) {
+          return `rgba(${values[0]}, ${values[1]}, ${values[2]}, ${alpha})`;
+        }
+      }
+
+      let sanitized = hex.replace("#", "");
+      if (sanitized.length === 3) {
+        sanitized = sanitized
+          .split("")
+          .map(char => char + char)
+          .join("");
+      }
+
+      const bigint = parseInt(sanitized, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+
+    const sidebarStyles = computed(() => {
+      const colors = themeStore.themeColors || {};
+      const primary = colors.primary || "#1e2a38";
+      const secondary = colors.secondary || "#18202c";
+      const accent = colors.accent || "#4ca1af";
+
+      return {
+        background: `linear-gradient(180deg, ${primary} 0%, ${secondary} 100%)`,
+        "--sidebar-accent": accent,
+        "--sidebar-accent-10": hexToRgba(accent, 0.1),
+        "--sidebar-accent-15": hexToRgba(accent, 0.15),
+        "--sidebar-accent-18": hexToRgba(accent, 0.18),
+        "--sidebar-accent-25": hexToRgba(accent, 0.25),
+        "--sidebar-accent-90": hexToRgba(accent, 0.9)
+      };
+    });
 
     const handleLogout = () => {
       authStore.logout();
@@ -169,7 +216,8 @@ export default {
 
     return {
       authStore,
-      handleLogout
+      handleLogout,
+      sidebarStyles
     };
   },
   methods: {
@@ -214,7 +262,11 @@ export default {
 
 <style scoped>
 .modern-sidebar {
-  background: linear-gradient(180deg, #1e2a38 0%, #18202c 100%);
+  background: linear-gradient(
+    180deg,
+    var(--theme-primary, #1e2a38) 0%,
+    var(--theme-secondary, #18202c) 100%
+  );
   color: white;
   border-right: none;
   display: flex;
@@ -273,11 +325,11 @@ export default {
 }
 
 .active-item {
-  background: rgba(76, 161, 175, 0.25) !important;
+  background: var(--sidebar-accent-25, rgba(76, 161, 175, 0.25)) !important;
 }
 
 .active-group {
-  background: rgba(76, 161, 175, 0.15);
+  background: var(--sidebar-accent-15, rgba(76, 161, 175, 0.15));
 }
 
 .icon-wrapper {
@@ -295,7 +347,7 @@ export default {
 }
 
 .active-icon {
-  color: #4ca1af;
+  color: var(--sidebar-accent, #4ca1af);
 }
 
 .menu-title {
@@ -322,11 +374,11 @@ export default {
 }
 
 .submenu-item:hover {
-  background: rgba(76, 161, 175, 0.18);
+  background: var(--sidebar-accent-18, rgba(76, 161, 175, 0.18));
 }
 
 .active-subitem {
-  background: rgba(76, 161, 175, 0.25) !important;
+  background: var(--sidebar-accent-25, rgba(76, 161, 175, 0.25)) !important;
   color: white !important;
 }
 
@@ -341,7 +393,7 @@ export default {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(76, 161, 175, 0.9);
+  background: var(--sidebar-accent-90, rgba(76, 161, 175, 0.9));
 }
 
 .submenu-title {

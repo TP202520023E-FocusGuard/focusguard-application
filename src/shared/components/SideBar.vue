@@ -1,12 +1,11 @@
 <template>
-  <v-navigation-drawer 
-    app 
-    permanent 
+  <v-navigation-drawer
+    app
+    permanent
     class="modern-sidebar"
     elevation="3"
     width="280"
   >
-    <!-- Header elegante -->
     <div class="sidebar-header">
       <div class="logo-container">
         <div class="logo-icon-wrapper">
@@ -19,24 +18,21 @@
       </div>
     </div>
 
-    <!-- Menú principal SIN v-list-group -->
-    <v-list 
-      density="compact" 
+    <v-list
+      density="compact"
       class="sidebar-menu"
       nav
     >
       <template v-for="(item, index) in menuItems" :key="index">
-        
-        <!-- Items con children - Lógica personalizada -->
         <div v-if="item.children" class="custom-menu-group">
-          <v-list-item 
+          <v-list-item
             class="menu-item"
             :class="{ 'active-group': openStates[item.name] }"
             @click="toggleMenu(item.name)"
           >
             <template #prepend>
               <div class="icon-wrapper">
-                <v-icon 
+                <v-icon
                   class="menu-icon"
                   :class="{ 'active-icon': openStates[item.name] }"
                 >
@@ -44,13 +40,13 @@
                 </v-icon>
               </div>
             </template>
-            
+
             <v-list-item-title class="menu-title">
               {{ item.name }}
             </v-list-item-title>
-            
+
             <template #append>
-              <v-icon 
+              <v-icon
                 class="arrow-icon"
                 :class="{ 'rotate-arrow': openStates[item.name] }"
               >
@@ -59,7 +55,6 @@
             </template>
           </v-list-item>
 
-          <!-- Subitems con transición -->
           <transition name="slide-down">
             <div v-if="openStates[item.name]" class="submenu-container">
               <v-list-item
@@ -75,14 +70,14 @@
                     <div class="submenu-dot"></div>
                   </div>
                 </template>
-                
+
                 <v-list-item-title class="submenu-title">
                   {{ child.name }}
                 </v-list-item-title>
-                
+
                 <template #append>
-                  <v-icon 
-                    v-if="child.icon" 
+                  <v-icon
+                    v-if="child.icon"
                     size="small"
                     class="submenu-icon"
                   >
@@ -94,7 +89,6 @@
           </transition>
         </div>
 
-        <!-- Items simples -->
         <v-list-item
           v-else
           :to="item.route"
@@ -109,39 +103,51 @@
               </v-icon>
             </div>
           </template>
-          
+
           <v-list-item-title class="menu-title">
             {{ item.name }}
           </v-list-item-title>
         </v-list-item>
 
-        <!-- Separador sutil -->
-        <v-divider 
-          v-if="index < menuItems.length - 1" 
+        <v-divider
+          v-if="index < menuItems.length - 1"
           class="menu-divider"
         />
       </template>
     </v-list>
 
-    <!-- Footer del sidebar -->
     <div class="sidebar-footer">
-      <div class="user-section">
+      <div class="user-section" v-if="authStore.user">
         <v-avatar size="40" color="rgba(255, 255, 255, 0.2)" class="user-avatar">
           <v-icon color="white" size="20">mdi-account</v-icon>
         </v-avatar>
         <div class="user-info">
-          <div class="user-name">Usuario</div>
+          <div class="user-name">{{ authStore.user.name }}</div>
           <div class="user-status">
             <span class="status-dot"></span>
             En línea
           </div>
         </div>
       </div>
+
+      <v-btn
+        class="logout-btn"
+        variant="tonal"
+        color="red-darken-1"
+        size="large"
+        block
+        @click="handleLogout"
+      >
+        <v-icon start>mdi-logout</v-icon>
+        Cerrar Sesión
+      </v-btn>
     </div>
   </v-navigation-drawer>
 </template>
 
 <script>
+import { useRouter } from "vue-router";
+import { useAuthStore } from "../../stores/authStore";
 import { menuItems } from "../data/menu.js";
 
 export default {
@@ -152,29 +158,38 @@ export default {
       openStates: {}
     };
   },
+  setup() {
+    const router = useRouter();
+    const authStore = useAuthStore();
+
+    const handleLogout = () => {
+      authStore.logout();
+      router.push({ name: "login" });
+    };
+
+    return {
+      authStore,
+      handleLogout
+    };
+  },
   methods: {
     toggleMenu(menuName) {
-      // Crear nuevo estado
       const newState = { ...this.openStates };
-      
-      // Si el menú clickeado ya está abierto, cerrarlo
+
       if (newState[menuName]) {
         newState[menuName] = false;
       } else {
-        // Cerrar todos los demás y abrir el clickeado
         Object.keys(newState).forEach(key => {
           newState[key] = false;
         });
         newState[menuName] = true;
       }
-      
+
       this.openStates = newState;
     },
-    
-    handleSubmenuClick() {
-      // No hacer nada especial, solo navegar
-    },
-    
+
+    handleSubmenuClick() {},
+
     closeAllMenus() {
       const newState = {};
       this.menuItems.forEach(item => {
@@ -186,7 +201,6 @@ export default {
     }
   },
   mounted() {
-    // Inicializar todos los estados como cerrados
     const initialState = {};
     this.menuItems.forEach(item => {
       if (item.children) {
@@ -200,246 +214,150 @@ export default {
 
 <style scoped>
 .modern-sidebar {
-  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%) !important;
-  border: none;
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(180deg, #1e2a38 0%, #18202c 100%);
+  color: white;
+  border-right: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-/* Header */
 .sidebar-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
+  padding: 24px 24px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .logo-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .logo-icon-wrapper {
-  background: linear-gradient(135deg, var(--theme-accent) 0%, var(--theme-secondary) 100%) !important;
-  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.05));
+  border-radius: 16px;
   padding: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.2);
 }
 
 .logo-text {
-  line-height: 1.3;
+  display: flex;
+  flex-direction: column;
 }
 
 .app-name {
-  font-size: 1.3rem;
+  font-size: 20px;
   font-weight: 700;
-  color: white;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
 }
 
 .app-subtitle {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 400;
-  margin-top: 2px;
+  font-size: 12px;
+  opacity: 0.7;
 }
 
-/* Menú */
 .sidebar-menu {
-  background: transparent !important;
-  padding: 16px 12px;
+  padding: 12px 12px 0;
   flex-grow: 1;
-}
-
-.custom-menu-group {
-  margin: 2px 0;
 }
 
 .menu-item {
   border-radius: 12px;
-  margin: 4px 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 48px;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.menu-item::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 3px;
-  background: linear-gradient(135deg, var(--theme-accent), var(--theme-secondary)) !important;
-  transform: scaleY(0);
-  transition: transform 0.3s ease;
-}
-
-.menu-item:hover::before,
-.menu-item.active-group::before {
-  transform: scaleY(1);
+  margin-bottom: 6px;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .menu-item:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.08);
   transform: translateX(4px);
 }
 
-.menu-item.active-group {
-  background: rgba(255, 255, 255, 0.12) !important;
+.active-item {
+  background: rgba(76, 161, 175, 0.25) !important;
+}
+
+.active-group {
+  background: rgba(76, 161, 175, 0.15);
 }
 
 .icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
 }
 
 .menu-icon {
-  color: rgba(255, 255, 255, 0.8);
-  transition: all 0.3s ease;
-  font-size: 20px;
+  color: rgba(255, 255, 255, 0.85);
 }
 
-.menu-icon.active-icon {
-  color: white;
-  transform: scale(1.1);
+.active-icon {
+  color: #4ca1af;
 }
 
 .menu-title {
-  color: rgba(255, 255, 255, 0.9);
   font-weight: 500;
-  font-size: 0.95rem;
   letter-spacing: 0.3px;
 }
 
 .arrow-icon {
-  color: rgba(255, 255, 255, 0.6);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-size: 18px;
+  transition: transform 0.2s ease;
 }
 
 .rotate-arrow {
   transform: rotate(180deg);
-  color: white;
 }
 
-/* Submenú Container */
 .submenu-container {
-  margin-left: 24px;
-  border-left: 2px solid rgba(255, 255, 255, 0.1);
-  padding-left: 8px;
+  padding-left: 12px;
 }
 
 .submenu-item {
-  border-radius: 8px;
-  margin: 2px 0;
-  min-height: 40px;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  margin: 4px 0;
+  padding-left: 12px;
 }
 
 .submenu-item:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-  transform: translateX(4px);
+  background: rgba(76, 161, 175, 0.18);
 }
 
-.submenu-item.active-subitem {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-left-color: var(--theme-accent) !important;
+.active-subitem {
+  background: rgba(76, 161, 175, 0.25) !important;
+  color: white !important;
 }
 
 .submenu-indicator {
+  width: 20px;
   display: flex;
   align-items: center;
-  margin-right: 16px;
+  justify-content: center;
 }
 
 .submenu-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
-  transition: all 0.3s ease;
-}
-
-.submenu-item.active-subitem .submenu-dot {
-  background: white;
-  transform: scale(1.3);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  background: rgba(76, 161, 175, 0.9);
 }
 
 .submenu-title {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.87rem;
-  font-weight: 400;
-  transition: all 0.3s ease;
-}
-
-.submenu-item:hover .submenu-title {
-  color: white;
+  font-size: 14px;
 }
 
 .submenu-icon {
   color: rgba(255, 255, 255, 0.5);
-  transition: all 0.3s ease;
 }
 
-.submenu-item:hover .submenu-icon {
-  color: white;
-  transform: scale(1.1);
-}
-
-/* Animaciones */
-.slide-down-enter-active {
-  animation: slideDown 0.3s ease-out;
-}
-
-.slide-down-leave-active {
-  animation: slideUp 0.2s ease-in;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-    max-height: 200px;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-    max-height: 200px;
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-10px);
-    max-height: 0;
-  }
-}
-
-/* Divisores */
-.menu-divider {
-  border-color: rgba(255, 255, 255, 0.08);
-  margin: 16px 0;
-}
-
-/* Footer */
 .sidebar-footer {
-  padding: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
+  padding: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .user-section {
@@ -449,100 +367,29 @@ export default {
 }
 
 .user-avatar {
-  background: rgba(255, 255, 255, 0.15) !important;
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-}
-
-.user-avatar:hover {
-  transform: scale(1.05);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.user-info {
-  line-height: 1.3;
-  flex-grow: 1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .user-name {
-  font-size: 0.9rem;
-  color: white;
   font-weight: 600;
 }
 
 .user-status {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.7);
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 2px;
+  font-size: 12px;
+  opacity: 0.8;
 }
 
 .status-dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: #4ade80;
-  box-shadow: 0 0 6px #4ade80;
+  background: #4caf50;
 }
 
-/* Estados activos para items simples */
-:deep(.active-item) {
-  background: rgba(255, 255, 255, 0.12) !important;
-}
-
-:deep(.active-item .menu-icon) {
-  color: white;
-  transform: scale(1.1);
-}
-
-:deep(.active-item .menu-title) {
-  color: white;
+.logout-btn {
   font-weight: 600;
-}
-
-/* Efecto de onda al hacer clic */
-.menu-item {
-  position: relative;
-  overflow: hidden;
-}
-
-.menu-item::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  transform: translate(-50%, -50%);
-  transition: width 0.3s, height 0.3s;
-}
-
-.menu-item:active::after {
-  width: 100px;
-  height: 100px;
-}
-
-/* Responsive */
-@media (max-width: 960px) {
-  .sidebar-header {
-    padding: 16px 12px;
-  }
-  
-  .app-name {
-    font-size: 1.1rem;
-  }
-  
-  .menu-title {
-    font-size: 0.85rem;
-  }
-  
-  .submenu-container {
-    margin-left: 20px;
-  }
 }
 </style>

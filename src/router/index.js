@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 import TrackingPage from "../tracking/pages/TrackingPage.vue";
 import UserCategories from "../users/pages/UserCategories.vue";
+import PersonalInfo from "../users/pages/PersonalInfo.vue";
 import LeisureTime from "../settings/pages/LeisureTime.vue";
 import ThemeSelector from "../components/ThemeSelector.vue";
 import LoginView from "../auth/pages/LoginView.vue";
@@ -22,7 +23,13 @@ const routes = [
     name: "leisure-time",
     meta: { requiresAuth: true }
   },
-  { path: "/profile", redirect: "/tracking" },
+  { path: "/profile", redirect: "/profile/info" },
+  {
+    path: "/profile/info",
+    component: PersonalInfo,
+    name: "personal-info",
+    meta: { requiresAuth: true }
+  },
   {
     path: "/profile/categories",
     component: UserCategories,

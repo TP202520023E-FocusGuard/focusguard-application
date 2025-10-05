@@ -187,6 +187,8 @@ watch(
   border-radius: 22px;
   padding: 32px 28px;
   backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.25);
 }
 
 .auth-link {

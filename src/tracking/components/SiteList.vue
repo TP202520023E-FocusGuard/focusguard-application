@@ -56,37 +56,37 @@
             </div>
           </template>
 
-          <template #item.category="{ item }">
+          <template #item.classification="{ item }">
             <v-menu location="bottom" :close-on-content-click="true">
               <template v-slot:activator="{ props }">
                 <v-btn 
                   v-bind="props"
                   variant="outlined"
                   density="compact"
-                  :color="categoryColor(item.category)"
-                  :prepend-icon="getCategoryIcon(item.category)"
-                  class="category-btn"
+                  :color="classificationColor(item.classification)"
+                  :prepend-icon="getClassificationIcon(item.classification)"
+                  class="classification-btn"
                 >
-                  {{ item.category }}
+                  {{ item.classification }}
                   <v-icon end>mdi-chevron-down</v-icon>
                 </v-btn>
               </template>
               
-              <v-card width="220" class="category-menu-card">
-                <v-list density="compact" class="category-menu-list">
+              <v-card width="220" class="classification-menu-card">
+                <v-list density="compact" class="classification-menu-list">
                   <v-list-item
-                    v-for="option in categoryOptions"
+                    v-for="option in classificationOptions"
                     :key="option.value"
-                    @click="updateSiteCategory(item, option.value)"
-                    :class="{ 'active-category': item.category === option.value }"
-                    class="category-menu-item"
+                    @click="updateSiteClassification(item, option.value)"
+                    :class="{ 'active-classification': item.classification === option.value }"
+                    class="classification-menu-item"
                   >
                     <template #prepend>
-                      <v-icon :color="categoryColor(option.value)" size="small">
-                        {{ getCategoryIcon(option.value) }}
+                      <v-icon :color="classificationColor(option.value)" size="small">
+                        {{ getClassificationIcon(option.value) }}
                       </v-icon>
                     </template>
-                    <v-list-item-title class="category-menu-title">
+                    <v-list-item-title class="classification-menu-title">
                       {{ option.title }}
                     </v-list-item-title>
                   </v-list-item>
@@ -119,7 +119,7 @@
 </template>
 
 <script>
-import axios from "axios";
+import { apiService } from "../../services/api/api";
 
 export default {
   name: "SiteList",
@@ -137,9 +137,9 @@ export default {
       ],
       headers: [
         { title: "Dominio", value: "name", width: "60%" },
-        { title: "Categoría", value: "category", width: "40%" }
+        { title: "Clasificación", value: "classification", width: "40%" }
       ],
-      categoryOptions: [
+      classificationOptions: [
         { title: "Sin Categoría", value: "Sin Categoría" },
         { title: "Productivo", value: "Productivo" },
         { title: "Neutral", value: "Neutral" },
@@ -199,18 +199,18 @@ export default {
     filteredSites() {
       if (this.selectedFilter === "Todos") return this.sites;
       if (this.selectedFilter === "Sin Categoría") {
-        return this.sites.filter(site => !site.category || site.category === "Sin Categoría");
+        return this.sites.filter(site => !site.classification || site.classification === "Sin Categoría");
       }
-      return this.sites.filter(site => site.category === this.selectedFilter);
+      return this.sites.filter(site => site.classification === this.selectedFilter);
     },
     siteStats() {
       const total = this.sites.length;
-      const categorized = this.sites.filter(site => site.category && site.category !== "Sin Categoría").length;
-      const productive = this.sites.filter(site => site.category === "Productivo").length;
+      const classified = this.sites.filter(site => site.classification && site.classification !== "Sin Categoría").length;
+      const productive = this.sites.filter(site => site.classification === "Productivo").length;
       
       return [
         { label: "Total Sitios", value: total, color: "primary--text" },
-        { label: "Categorizados", value: categorized, color: "green--text" },
+        { label: "Clasificados", value: classified, color: "green--text" },
         { label: "Productivos", value: productive, color: "success--text" }
       ];
     }
@@ -218,34 +218,90 @@ export default {
   methods: {
     async fetchSites() {
       try {
-        const response = await axios.get("http://localhost:3001/sites");
-        this.sites = response.data;
+        const response = await apiService.getSites(1);
+        
+        // ✅ MAPEAR CON classification EN LUGAR DE category
+        this.sites = response.map(site => {
+          const clasificacionActiva = site.clasificacion_personal || site.clasificacion_global;
+          
+          return {
+            id: site.id_sitio || site.dominio,
+            name: site.dominio,
+            classification: this.mapBackendClassification(clasificacionActiva.nombre),
+            rawData: site
+          };
+        });
       } catch (error) {
         console.error("Error cargando sitios:", error);
       }
     },
-    async updateSiteCategory(site, newCategory) {
+
+    mapBackendClassification(backendClassification) {
+      const classificationMap = {
+        'productivo': 'Productivo',
+        'neutral': 'Neutral', 
+        'doble_filo': 'Doble Filo',
+        'distractor': 'Distractor',
+        'sin_clasificar': 'Sin Categoría'
+      };
+      return classificationMap[backendClassification] || 'Sin Categoría';
+    },
+
+    async updateSiteClassification(site, newClassification) {
       try {
-        site.category = newCategory;
-        await axios.put(`http://localhost:3001/sites/${site.id}`, site);
-        console.log(`Sitio ${site.name} actualizado a: ${site.category}`);
-        this.$forceUpdate();
+        const classificationMap = {
+          'Productivo': 1,
+          'Neutral': 2, 
+          'Doble Filo': 3,
+          'Distractor': 4,
+          'Sin Categoría': 5
+        };
+        
+        const idClasificacion = classificationMap[newClassification];
+        
+        // ✅ PREPARAR DATOS SEGÚN TIPO DE SITIO
+        let classificationData;
+        
+        if (site.rawData.tipo_sitio === 'base' && site.rawData.id_sitio) {
+          classificationData = {
+            site_id: site.rawData.id_sitio,
+            id_clasificacion: idClasificacion
+          };
+        } else {
+          classificationData = {
+            dominio: site.rawData.dominio,
+            id_clasificacion: idClasificacion
+          };
+        }
+
+        const response = await apiService.updateSiteClassification(classificationData);
+
+        if (response.success) {
+          site.classification = newClassification;
+          console.log(`✅ Sitio ${site.name} actualizado a: ${site.classification}`);
+          this.$forceUpdate();
+        }
       } catch (error) {
-        console.error("Error actualizando categoría:", error);
+        console.error("Error actualizando clasificación:", error);
       }
     },
+
+    getBackendClassificationName(frontendClassification) {
+      const reverseMap = {
+        'Productivo': 'productivo',
+        'Neutral': 'neutral',
+        'Doble Filo': 'doble_filo', 
+        'Distractor': 'distractor',
+        'Sin Categoría': 'sin_clasificar'
+      };
+      return reverseMap[frontendClassification] || 'sin_clasificar';
+    },
     
-    // FUNCIÓN PRINCIPAL PARA EXTRAER DOMINIO Y ASIGNAR ICONO
     extractDomainName(fullUrl) {
       if (!fullUrl) return 'Desconocido';
       
-      // Limpiar la URL y extraer el dominio
       let domain = fullUrl.toLowerCase();
-      
-      // Remover protocolos
       domain = domain.replace(/^(https?:\/\/)?(www\.)?/, '');
-      
-      // Remover paths y parámetros
       domain = domain.split('/')[0];
       domain = domain.split('?')[0];
       
@@ -257,14 +313,12 @@ export default {
       
       const cleanDomain = this.extractDomainName(domain);
       
-      // Buscar coincidencia EXACTA primero
       for (const [pattern, info] of Object.entries(this.domainPatterns)) {
         if (pattern !== 'default' && cleanDomain === pattern) {
           return info;
         }
       }
       
-      // Si no hay coincidencia exacta, buscar parcial
       for (const [pattern, info] of Object.entries(this.domainPatterns)) {
         if (pattern !== 'default' && cleanDomain.includes(pattern)) {
           return info;
@@ -290,7 +344,7 @@ export default {
       return this.getDomainInfo(domain).name;
     },
 
-    categoryColor(category) {
+    classificationColor(classification) {
       const colors = {
         "Productivo": "success",
         "Neutral": "grey",
@@ -298,10 +352,10 @@ export default {
         "Distractor": "error",
         "Sin Categoría": "blue-grey"
       };
-      return colors[category] || "primary";
+      return colors[classification] || "primary";
     },
     
-    getCategoryIcon(category) {
+    getClassificationIcon(classification) {
       const icons = {
         "Productivo": "mdi-check-circle",
         "Neutral": "mdi-minus-circle",
@@ -309,10 +363,10 @@ export default {
         "Distractor": "mdi-close-circle",
         "Sin Categoría": "mdi-help-circle"
       };
-      return icons[category] || "mdi-help-circle";
+      return icons[classification] || "mdi-help-circle";
     },
     
-    getFilterIcon(category) {
+    getFilterIcon(classification) {
       const icons = {
         "Todos": "mdi-view-dashboard",
         "Sin Categoría": "mdi-help-circle",
@@ -321,7 +375,7 @@ export default {
         "Doble Filo": "mdi-alert-circle",
         "Distractor": "mdi-close-circle"
       };
-      return icons[category] || "mdi-circle";
+      return icons[classification] || "mdi-circle";
     }
   },
   mounted() {
@@ -350,13 +404,13 @@ export default {
   border-radius: 8px;
 }
 
-.category-btn {
+.classification-btn {
   min-width: 140px !important;
   justify-content: start !important;
   transition: all 0.2s ease;
 }
 
-.category-btn:hover {
+.classification-btn:hover {
   transform: scale(1.05);
 }
 
@@ -368,21 +422,21 @@ export default {
   gap: 8px;
 }
 
-/* ESTILOS PARA EL NUEVO DROPDOWN CON v-menu */
-:deep(.category-menu-card) {
+/* ESTILOS PARA EL NUEVO DROPDOWN */
+:deep(.classification-menu-card) {
   background: white !important;
   border: 1px solid #e0e0e0 !important;
   border-radius: 8px !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
 }
 
-:deep(.category-menu-list) {
+:deep(.classification-menu-list) {
   background: white !important;
   border-radius: 8px !important;
   padding: 4px 0 !important;
 }
 
-:deep(.category-menu-item) {
+:deep(.classification-menu-item) {
   background: white !important;
   min-height: 40px !important;
   border-radius: 4px !important;
@@ -391,28 +445,27 @@ export default {
   transition: all 0.2s ease !important;
 }
 
-:deep(.category-menu-item:hover) {
+:deep(.classification-menu-item:hover) {
   background: #f8f9fa !important;
   transform: translateX(2px);
 }
 
-:deep(.active-category) {
+:deep(.active-classification) {
   background: #e3f2fd !important;
   color: #1976d2 !important;
 }
 
-:deep(.category-menu-title) {
+:deep(.classification-menu-title) {
   color: #333 !important;
   font-weight: 500 !important;
   font-size: 0.875rem !important;
 }
 
-:deep(.active-category .category-menu-title) {
+:deep(.active-classification .classification-menu-title) {
   color: #1976d2 !important;
   font-weight: 600 !important;
 }
 
-/* Asegurar que el overlay funcione correctamente */
 :deep(.v-overlay__content) {
   z-index: 9999 !important;
 }
@@ -439,7 +492,7 @@ export default {
     gap: 8px;
   }
   
-  .category-btn {
+  .classification-btn {
     min-width: 120px !important;
     font-size: 0.8rem !important;
   }

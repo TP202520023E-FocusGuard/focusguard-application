@@ -11,6 +11,16 @@
       </p>
     </div>
 
+    <!-- Loading state-->
+    <div v-if="loading" class="text-center py-4">
+      <v-progress-circular
+        indeterminate
+        color="primary"
+        size="36"
+      ></v-progress-circular>
+      <div class="text-caption text--secondary mt-2">Cargando configuración...</div>
+    </div>
+
     <!-- Display del tiempo actual -->
     <v-card variant="outlined" class="pa-3 mb-3 text-center">
       <div class="time-display-compact">
@@ -116,46 +126,113 @@
         min-width="140"
       >
         <v-icon left size="small">mdi-content-save</v-icon>
-        Guardar
+        {{ hasChanges ? 'Guardar Cambios' : 'Guardado' }}
       </v-btn>
     </v-card-actions>
+
+    <!-- Mensaje de exito-->
+    <v-alert
+      v-if="showSuccess"
+      type="success"
+      variant="tonal"
+      density="compact"
+      class="mt-3"
+    >
+      <div class="text-caption">
+        Configuración guardada con éxito.
+      </div>
+    </v-alert> 
   </v-card>
 </template>
 
 <script>
+
+import { apiService } from '../../services/api/api.js';
 export default {
   name: 'LeisureTimeConfig',
   data() {
     return {
       leisureTime: 30,
+      originalLeisureTime: 30,
       saving: false,
-      timePresets: [15, 30, 45, 60, 90, 120]
+      loading: true,
+      showSuccess: false,
+      timePresets: [15, 30, 45, 60, 90, 120],
+      userConfig: null
     };
   },
+  computed: {
+    hasChanges() {
+      return this.leisureTime !== this.originalLeisureTime;
+    }
+  },
   methods: {
+    async loadConfiguration() {
+      try {
+        this.loading = true;
+        const config = await apiService.getTimeConfiguration(1); // userId = 1 por ahora
+        
+        this.userConfig = config;
+        this.leisureTime = config.tiempo_ocio_diario || 30;
+        this.originalLeisureTime = this.leisureTime;
+    
+      } catch (error) {
+        console.error('❌ Error cargando configuración:', error);
+        // Valores por defecto si hay error
+        this.leisureTime = 30;
+        this.originalLeisureTime = 30;
+      } finally {
+        this.loading = false;
+      }
+    },
+
     incrementTime() {
       if (this.leisureTime < 180) {
         this.leisureTime += 15;
       }
     },
+
     decrementTime() {
       if (this.leisureTime > 15) {
         this.leisureTime -= 15;
       }
     },
+
     async saveSettings() {
+      if (!this.hasChanges) return;
+
       this.saving = true;
+      this.showSuccess = false;
+      
       try {
-        // Lógica para guardar en el backend
-        console.log('Tiempo de ocio guardado:', this.leisureTime);
-        await new Promise(resolve => setTimeout(resolve, 800));
+        const configData = {
+          tiempo_ocio_diario: this.leisureTime,
+          tiempo_max_productivo: this.userConfig?.tiempo_max_productivo || 0,
+          idioma: this.userConfig?.idioma || 'es',
+          bloqueo_automatico: this.userConfig?.bloqueo_automatico || true
+        };
+        
+        const response = await apiService.updateTimeConfiguration(configData);
+        
+        this.originalLeisureTime = this.leisureTime;
+        this.showSuccess = true;
+        
         this.$emit('saved', this.leisureTime);
+
+        setTimeout(() => {
+          this.showSuccess = false;
+        }, 3000);
+
       } catch (error) {
-        console.error('Error guardando configuración:', error);
+        console.error('❌ Error guardando configuración:', error);
+        this.$emit('error', error.message);
       } finally {
         this.saving = false;
       }
     }
+  },
+  mounted() {
+    this.loadConfiguration();
   }
 };
 </script>

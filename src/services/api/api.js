@@ -1,78 +1,108 @@
-// frontend/src/services/api.js
-const API_BASE = 'http://localhost:8000/api/v1'; // Tu FastAPI
+const API_BASE = 'http://localhost:8080/api/v1'; // Tu FastAPI
 
+async function handleResponse(response) {
+    if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        try {
+            const data = await response.json();
+            if (data?.detail) errorMessage += ` - ${data.detail}`;
+        } catch {
+        }
+        throw new Error(errorMessage);
+    }
+    return response.json();
+}
 
 export const apiService = {
-    // ✅ PARA EL LISTADO DE SITIOS (usando tu endpoint actual)
     async getSites(userId = 1) {
-        const response = await fetch(`${API_BASE}/sites/user/${userId}/combined`);
-        return await response.json();
+        try {
+            const response = await fetch(`${API_BASE}/website-users/website-with-category/user/${userId}`);
+            return await handleResponse(response);
+        } catch (error) {
+            console.error("Error al obtener sitios:", error.message);
+            throw error;
+        }
     },
 
-    // ✅ PARA LA PREDICCIÓN GRU (nuevo endpoint)
     async predictFocus(navigationData) {
-        const response = await fetch(`${API_BASE}/sequential/predict`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(navigationData)
-        });
-        return await response.json();
+        if (!navigationData || !Array.isArray(navigationData) || navigationData.length === 0) {
+            throw new Error("navigationData inválido o vacío");
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/sequential/predict`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(navigationData)
+            });
+            return await handleResponse(response);
+        } catch (error) {
+            console.error("Error al predecir foco:", error.message);
+            throw error;
+        }
     },
 
-    // ✅ PARA EL ESTADO DEL MODELO GRU
     async getModelStatus() {
-        const response = await fetch(`${API_BASE}/sequential/status`);
-        return await response.json();
+        try {
+            const response = await fetch(`${API_BASE}/sequential/status`);
+            return await handleResponse(response);
+        } catch (error) {
+            console.error("Error al obtener estado del modelo:", error.message);
+            throw error;
+        }
     },
 
-    // ✅ ACTUALIZAR CATEGORÍA (mantener tu endpoint actual)
-    async updateSiteClassification(classificationData) {
-        const user_id = 1;
-        
-        const response = await fetch(`${API_BASE}/sites/user/${user_id}/classification`, {
-            method: 'PUT',
-            headers: {
-            'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(classificationData)
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    async updateSiteClassification(siteId, categoryName, userId = null) {
+        try {
+            const effectiveUserId = userId || 1;
+            const siteResponse = await fetch(`${API_BASE}/website-users/${siteId}`);
+            const siteData = await handleResponse(siteResponse);
+
+            const categoryResponse = await fetch(`${API_BASE}/categories/web/nombre/${encodeURIComponent(categoryName)}`);
+            const categoryData = await handleResponse(categoryResponse);
+
+            const body = {
+                id_usuarios: effectiveUserId,
+                id_sitios_web_usuario: siteData.id, 
+                id_categorias_web_nuevo: categoryData.id
+            };
+
+            const response = await fetch(`${API_BASE}/change-category/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            const result = await handleResponse(response);
+            return result;
+
+        } catch (error) {
+            console.error("Error en updateSiteClassification:", error.message);
+            throw error;
         }
-        
-        return await response.json();
     },
 
-    async getTimeConfiguration() {
-        const user_id = 1;
-        const response = await fetch(`${API_BASE}/configuration/${user_id}`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    async getTimeConfiguration(userId = 1) {
+        try {
+            const response = await fetch(`${API_BASE}/configuration/${userId}`);
+            return await handleResponse(response);
+        } catch (error) {
+            console.error("Error al obtener configuración de tiempo:", error.message);
+            throw error;
         }
-        return await response.json();
     },
 
-    async updateTimeConfiguration(configData) {
-        const user_id = 1;
-
-        const response = await fetch(`${API_BASE}/configuration/${user_id}`, {
-            method: 'PUT',
-            headers: {
-            'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(configData)
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    async updateTimeConfiguration(configData, userId = 1) {
+        try {
+            const response = await fetch(`${API_BASE}/configuration/${userId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(configData)
+            });
+            return await handleResponse(response);
+        } catch (error) {
+            console.error("Error al actualizar configuración de tiempo:", error.message);
+            throw error;
         }
-        
-        return await response.json();
     }
-
 };

@@ -220,81 +220,78 @@ export default {
       try {
         const response = await apiService.getSites(1);
         
-        // ✅ MAPEAR CON classification EN LUGAR DE category
+        console.log("Sitios cargados:", response);
+
+        if (!Array.isArray(response)) {
+          console.error("¡La API no devolvió un array!", response);
+          return;
+        }
+
         this.sites = response.map(site => {
-          const clasificacionActiva = site.clasificacion_personal || site.clasificacion_global;
-          
           return {
-            id: site.id_sitio || site.dominio,
+            id: site.id || site.dominio,
             name: site.dominio,
-            classification: this.mapBackendClassification(clasificacionActiva.nombre),
+            classification: this.mapBackendClassification(site.categoria?.toLowerCase()),
             rawData: site
           };
         });
+
       } catch (error) {
         console.error("Error cargando sitios:", error);
       }
     },
 
     mapBackendClassification(backendClassification) {
-      const classificationMap = {
-        'productivo': 'Productivo',
-        'neutral': 'Neutral', 
-        'doble_filo': 'Doble Filo',
-        'distractor': 'Distractor',
-        'sin_clasificar': 'Sin Categoría'
+      if (!backendClassification) return "Sin Categoría";
+      const map = {
+        productivo: "Productivo",
+        neutral: "Neutral",
+        "doble filo": "Doble Filo",
+        distractor: "Distractor",
+        "sin categoria": "Sin Categoría",
+        "sin categoría": "Sin Categoría"
       };
-      return classificationMap[backendClassification] || 'Sin Categoría';
+      return map[backendClassification.trim().toLowerCase()] || "Sin Categoría";
     },
 
     async updateSiteClassification(site, newClassification) {
       try {
-        const classificationMap = {
-          'Productivo': 1,
-          'Neutral': 2, 
-          'Doble Filo': 3,
-          'Distractor': 4,
-          'Sin Categoría': 5
-        };
-        
-        const idClasificacion = classificationMap[newClassification];
-        
-        // ✅ PREPARAR DATOS SEGÚN TIPO DE SITIO
-        let classificationData;
-        
-        if (site.rawData.tipo_sitio === 'base' && site.rawData.id_sitio) {
-          classificationData = {
-            site_id: site.rawData.id_sitio,
-            id_clasificacion: idClasificacion
-          };
-        } else {
-          classificationData = {
-            dominio: site.rawData.dominio,
-            id_clasificacion: idClasificacion
-          };
-        }
 
-        const response = await apiService.updateSiteClassification(classificationData);
+          if (site.classification === newClassification) {
+            return; 
+          }
 
-        if (response.success) {
+          const backendCategoryName = this.getBackendClassificationName(newClassification);
+          console.log("Nombre de categoría para backend:", backendCategoryName);
+
+          const result = await apiService.updateSiteClassification(
+              site.rawData.id, 
+              backendCategoryName,
+              1 // user_id
+          );
+
+          console.log("Respuesta del servidor:", result);
+
           site.classification = newClassification;
-          console.log(`✅ Sitio ${site.name} actualizado a: ${site.classification}`);
-          this.$forceUpdate();
-        }
+
+          this.$nextTick(() => {
+              console.log(`✅ Sitio ${site.name} actualizado a: ${site.classification}`);
+          });
+
       } catch (error) {
-        console.error("Error actualizando clasificación:", error);
+          console.error("❌ Error actualizando clasificación:", error);
       }
     },
 
     getBackendClassificationName(frontendClassification) {
-      const reverseMap = {
-        'Productivo': 'productivo',
-        'Neutral': 'neutral',
-        'Doble Filo': 'doble_filo', 
-        'Distractor': 'distractor',
-        'Sin Categoría': 'sin_clasificar'
+      const map = {
+          "Productivo": "productivo",
+          "Neutral": "neutral", 
+          "Doble Filo": "doble filo",
+          "Distractor": "distractor",
+          "Sin Categoría": "sin categoria"
       };
-      return reverseMap[frontendClassification] || 'sin_clasificar';
+      return map[frontendClassification] || "sin categoria";
     },
     
     extractDomainName(fullUrl) {

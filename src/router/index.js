@@ -6,6 +6,7 @@ import LeisureTime from "../settings/pages/LeisureTime.vue";
 import ThemeSelector from "../components/ThemeSelector.vue";
 import LoginView from "../auth/pages/LoginView.vue";
 import RegisterView from "../auth/pages/RegisterView.vue";
+import DashboardPage from "../dashboard/pages/DashboardPage.vue";
 import { useAuthStore } from "../stores/authStore";
 
 const routes = [
@@ -57,6 +58,12 @@ const routes = [
   {
     path: "/:pathMatch(.*)*",
     redirect: "/auth/login"
+  },
+  {
+    path: "/dashboard",
+    component: DashboardPage,
+    name: "dashboard",
+    meta: { requiresAuth: true }
   }
 ];
 

@@ -175,7 +175,7 @@ export default {
         this.userConfig = config;
         this.leisureTime = config.tiempo_ocio_diario || 30;
         this.originalLeisureTime = this.leisureTime;
-    
+     
       } catch (error) {
         console.error('❌ Error cargando configuración:', error);
         // Valores por defecto si hay error

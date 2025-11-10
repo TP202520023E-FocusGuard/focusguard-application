@@ -40,5 +40,10 @@ export const menuItems = [
     name: "Dashboard",
     icon: "mdi-view-dashboard",
     route: "/dashboard"
+  },
+  {
+    name: "Metas",
+    icon: "mdi-flag-checkered",
+    route: "/goals"
   }
 ];

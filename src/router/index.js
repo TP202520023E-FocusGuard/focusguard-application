@@ -8,6 +8,7 @@ import LoginView from "../auth/pages/LoginView.vue";
 import RegisterView from "../auth/pages/RegisterView.vue";
 import DashboardPage from "../dashboard/pages/DashboardPage.vue";
 import { useAuthStore } from "../stores/authStore";
+import GoalsPage from "../goals/pages/GoalsPage.vue";
 
 const routes = [
   { path: "/", redirect: "/tracking" },
@@ -63,6 +64,12 @@ const routes = [
     path: "/dashboard",
     component: DashboardPage,
     name: "dashboard",
+    meta: { requiresAuth: true }
+  },
+  {
+    path: "/goals",
+    component: GoalsPage,
+    name: "goals",
     meta: { requiresAuth: true }
   }
 ];

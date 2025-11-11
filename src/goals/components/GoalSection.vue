@@ -30,18 +30,25 @@
           density="compact"
         ></v-textarea>
         
-        <!-- BOTÓN MEJORADO -->
         <v-btn 
           color="primary" 
           size="small"
           @click="saveGoal"
-          :disabled="!currentGoal.trim()"
+          :disabled="!currentGoal.trim() || loading"
+          :loading="loading"
           class="goal-save-btn enhanced-save-btn"
           rounded="lg"
           :elevation="2"
         >
+          <template v-slot:loader>
+            <v-progress-circular
+              indeterminate
+              size="16"
+              width="2"
+            ></v-progress-circular>
+          </template>
           <v-icon start size="18" class="btn-icon">mdi-check-circle</v-icon>
-          <span class="btn-text">Guardar Meta</span>
+          <span class="btn-text">{{ loading ? 'Guardando...' : 'Guardar Meta' }}</span>
           <v-icon end size="14" class="btn-arrow">mdi-chevron-right</v-icon>
         </v-btn>
       </div>
@@ -72,21 +79,59 @@
 </template>
 
 <script>
+import { goalsService } from '../../goals/services/GoalsService';
+
 export default {
   name: "GoalSection",
   emits: ['goalSaved'],
   data() {
     return {
       currentGoal: '',
-      savedGoal: ''
+      savedGoal: '',
+      goalId: null, // Para guardar el ID de la meta existente
+      userId: 1, // Por ahora hardcodeado, luego puedes obtenerlo del auth
+      loading: false
     };
   },
+  async mounted() {
+    // Cargar la meta existente al iniciar
+    await this.loadExistingGoal();
+  },
   methods: {
-    saveGoal() {
+    async loadExistingGoal() {
+      try {
+        const existingGoal = await goalsService.getGoal();
+        if (existingGoal) {
+          this.savedGoal = existingGoal.texto;
+          this.goalId = existingGoal.id;
+        }
+      } catch (error) {
+        console.error('Error cargando meta existente:', error);
+      }
+    },
+
+    async saveGoal() {
       if (this.currentGoal.trim()) {
-        this.savedGoal = this.currentGoal.trim();
-        this.currentGoal = '';
-        this.$emit('goalSaved', this.savedGoal);
+        this.loading = true;
+        try {
+          const goalData = {
+            id_usuarios: this.userId,
+            texto: this.currentGoal.trim()
+          };
+
+          const savedGoal = await goalsService.saveGoal(goalData);
+          
+          this.savedGoal = savedGoal.texto;
+          this.goalId = savedGoal.id;
+          this.currentGoal = '';
+          
+          this.$emit('goalSaved', this.savedGoal);
+        } catch (error) {
+          console.error('Error guardando meta:', error);
+          // Puedes mostrar un mensaje de error al usuario
+        } finally {
+          this.loading = false;
+        }
       }
     },
     

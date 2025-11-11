@@ -104,5 +104,61 @@ export const apiService = {
             console.error("Error al actualizar configuración de tiempo:", error.message);
             throw error;
         }
+    },
+
+    async getGoalsByUser(userId = 1){
+        try {
+            const response = await fetch(`${API_BASE}/goals/user/${userId}`);
+            return await handleResponse(response);
+        } catch (error) {
+            console.error("Error al obtener metas:", error.message);
+            throw error;
+        }
+    },
+
+    async createGoal(goalData){
+        try {
+            const response = await fetch(`${API_BASE}/goals/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(goalData)
+            });
+            return await handleResponse(response);
+        }
+        catch (error) {
+            console.error("Error al crear meta:", error.message);
+            throw error;
+        }
+    },
+
+    async updateGoal(goalId, goalData){
+        try {
+            const response = await fetch(`${API_BASE}/goals/${goalId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(goalData)
+            });
+            return await handleResponse(response);
+        }
+        catch (error) {
+            console.error("Error al actualizar meta:", error.message);
+            throw error;
+        }
+    },
+
+    async deleteGoal(goalId){
+        try {
+            const response = await fetch(`${API_BASE}/goals/${goalId}`, {
+                method: 'DELETE'
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return true;
+        }
+        catch (error) {
+            console.error("Error al eliminar meta:", error.message);
+            throw error;
+        }
     }
 };

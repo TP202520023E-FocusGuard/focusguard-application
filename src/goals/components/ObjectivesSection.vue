@@ -81,6 +81,7 @@
 <script>
 import ObjectiveCard from './ObjectiveCard.vue';
 import NewObjectiveDialog from './ObjectiveDialog.vue';
+import { apiService } from '../../services/api/api';
 
 export default {
   name: "ObjectivesSection",

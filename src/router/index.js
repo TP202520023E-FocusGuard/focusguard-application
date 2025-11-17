@@ -6,6 +6,7 @@ import LeisureTime from "../settings/pages/LeisureTime.vue";
 import ThemeSelector from "../components/ThemeSelector.vue";
 import LoginView from "../auth/pages/LoginView.vue";
 import RegisterView from "../auth/pages/RegisterView.vue";
+import ResetPasswoard from "../auth/pages/ResetPasswoard.vue";
 import DashboardPage from "../dashboard/pages/DashboardPage.vue";
 import { useAuthStore } from "../stores/authStore";
 import GoalsPage from "../goals/pages/GoalsPage.vue";
@@ -54,6 +55,12 @@ const routes = [
     path: "/auth/register",
     name: "register",
     component: RegisterView,
+    meta: { guestOnly: true, layout: "auth" }
+  },
+  {
+    path: "/auth/forgot-password",
+    name: "forgot-password",
+    component: ResetPasswoard,
     meta: { guestOnly: true, layout: "auth" }
   },
   {

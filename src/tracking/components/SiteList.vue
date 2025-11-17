@@ -1,7 +1,8 @@
+<!-- components/SiteList.vue -->
 <template>
   <v-container fluid class="pa-4">
     <v-card class="elegant-card pa-4" elevation="2">
-      <!-- Header mejorado -->
+      <!-- Header -->
       <div class="text-center mb-4">
         <v-icon color="primary" size="48" class="mb-2">mdi-web</v-icon>
         <h2 class="text-h5 font-weight-bold primary--text mb-1">
@@ -12,121 +13,166 @@
         </p>
       </div>
 
-      <!-- Filtros mejorados -->
-      <v-card variant="outlined" class="pa-3 mb-4">
-        <div class="text-caption font-weight-medium mb-2 text-center">Filtrar por categoría:</div>
-        <div class="d-flex flex-wrap gap-2 justify-center">
-          <v-chip
-            v-for="cat in categoriesFilter"
-            :key="cat"
-            :color="selectedFilter === cat ? 'primary' : 'grey lighten-3'"
-            :text-color="selectedFilter === cat ? 'white' : 'grey darken-2'"
-            @click="selectedFilter = cat"
-            class="filter-chip"
-            size="small"
-            :prepend-icon="getFilterIcon(cat)"
-          >
-            {{ cat }}
-          </v-chip>
+      <!-- Indicadores de estado -->
+      <v-alert v-if="loading" type="info" variant="tonal" class="mb-4">
+        <div class="d-flex align-center">
+          <v-progress-circular indeterminate size="20" class="mr-3"></v-progress-circular>
+          Cargando sitios web...
         </div>
-      </v-card>
+      </v-alert>
 
-      <!-- Tabla mejorada -->
-      <v-card variant="outlined" class="elevation-1">
-        <v-data-table
-          :headers="headers"
-          :items="filteredSites"
-          :items-per-page="10"
-          item-value="id"
-          density="comfortable"
-          class="site-table"
-        >
-          <!-- Columna Dominio -->
-          <template #item.name="{ item }">
-            <div class="d-flex align-center">
-              <v-avatar size="32" :color="getDomainColor(item.name)" class="mr-3">
-                <v-icon :color="getDomainIconColor(item.name)" size="18">
-                  {{ getDomainIcon(item.name) }}
-                </v-icon>
-              </v-avatar>
-              <div>
-                <div class="text-body-2 font-weight-medium">{{ extractDomainName(item.name) }}</div>
-                <div class="text-caption text--secondary">{{ item.name }}</div>
-              </div>
-            </div>
-          </template>
+      <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-4">
+        <div class="d-flex align-center justify-space-between">
+          <span>{{ errorMessage }}</span>
+          <v-btn color="error" variant="text" size="small" @click="$emit('retry')" prepend-icon="mdi-refresh">
+            Reintentar
+          </v-btn>
+        </div>
+      </v-alert>
 
-          <template #item.classification="{ item }">
-            <v-menu location="bottom" :close-on-content-click="true">
-              <template v-slot:activator="{ props }">
-                <v-btn 
-                  v-bind="props"
-                  variant="outlined"
-                  density="compact"
-                  :color="classificationColor(item.classification)"
-                  :prepend-icon="getClassificationIcon(item.classification)"
-                  class="classification-btn"
-                >
-                  {{ item.classification }}
-                  <v-icon end>mdi-chevron-down</v-icon>
-                </v-btn>
-              </template>
-              
-              <v-card width="220" class="classification-menu-card">
-                <v-list density="compact" class="classification-menu-list">
-                  <v-list-item
-                    v-for="option in classificationOptions"
-                    :key="option.value"
-                    @click="updateSiteClassification(item, option.value)"
-                    :class="{ 'active-classification': item.classification === option.value }"
-                    class="classification-menu-item"
-                  >
-                    <template #prepend>
-                      <v-icon :color="classificationColor(option.value)" size="small">
-                        {{ getClassificationIcon(option.value) }}
-                      </v-icon>
-                    </template>
-                    <v-list-item-title class="classification-menu-title">
-                      {{ option.title }}
-                    </v-list-item-title>
-                  </v-list-item>
-                </v-list>
-              </v-card>
-            </v-menu>
-          </template>
-          <!-- Empty state -->
-          <template #no-data>
-            <div class="text-center py-8">
-              <v-icon size="64" color="grey lighten-2" class="mb-2">mdi-web-off</v-icon>
-              <div class="text-h6 text--secondary">No hay sitios web</div>
-              <div class="text-caption text--secondary mt-1">Agrega algunos sitios para comenzar</div>
-            </div>
-          </template>
-        </v-data-table>
-      </v-card>
-
-      <!-- Estadísticas rápidas -->
-      <v-card variant="tonal" class="mt-4 pa-3">
-        <div class="d-flex justify-space-around text-center">
-          <div v-for="stat in siteStats" :key="stat.label" class="stat-item">
-            <div class="text-h6 font-weight-bold" :class="stat.color">{{ stat.value }}</div>
-            <div class="text-caption text--secondary">{{ stat.label }}</div>
+      <!-- Contenido principal -->
+      <template v-if="!errorMessage && !loading">
+        <!-- Filtros -->
+        <v-card variant="outlined" class="pa-3 mb-4">
+          <div class="text-caption font-weight-medium mb-2 text-center">Filtrar por categoría:</div>
+          <div class="d-flex flex-wrap gap-2 justify-center">
+            <v-chip
+              v-for="cat in categoriesFilter"
+              :key="cat"
+              :color="selectedFilter === cat ? 'primary' : 'grey lighten-3'"
+              :text-color="selectedFilter === cat ? 'white' : 'grey darken-2'"
+              @click="$emit('filter-change', cat)"
+              class="filter-chip"
+              size="small"
+              :prepend-icon="getFilterIcon(cat)"
+            >
+              {{ cat }}
+            </v-chip>
           </div>
-        </div>
-      </v-card>
+        </v-card>
+
+        <!-- Tabla -->
+        <v-card variant="outlined" class="elevation-1">
+          <v-data-table
+            :headers="headers"
+            :items="filteredSites"
+            :items-per-page="10"
+            item-value="id"
+            density="comfortable"
+            class="site-table"
+          >
+            <!-- Columna Dominio -->
+            <template #item.name="{ item }">
+              <div class="d-flex align-center">
+                <v-avatar size="32" :color="getDomainColor(item.name)" class="mr-3">
+                  <v-icon :color="getDomainIconColor(item.name)" size="18">
+                    {{ getDomainIcon(item.name) }}
+                  </v-icon>
+                </v-avatar>
+                <div>
+                  <div class="text-body-2 font-weight-medium">{{ extractDomainName(item.name) }}</div>
+                  <div class="text-caption text--secondary">{{ item.name }}</div>
+                </div>
+              </div>
+            </template>
+
+            <!-- Columna Clasificación -->
+            <template #item.classification="{ item }">
+              <v-menu location="bottom" :close-on-content-click="true">
+                <template v-slot:activator="{ props }">
+                  <v-btn 
+                    v-bind="props"
+                    variant="outlined"
+                    density="compact"
+                    :color="classificationColor(item.classification)"
+                    :prepend-icon="getClassificationIcon(item.classification)"
+                    class="classification-btn"
+                  >
+                    {{ item.classification }}
+                    <v-icon end>mdi-chevron-down</v-icon>
+                  </v-btn>
+                </template>
+                
+                <v-card width="220" class="classification-menu-card">
+                  <v-list density="compact" class="classification-menu-list">
+                    <v-list-item
+                      v-for="option in classificationOptions"
+                      :key="option.value"
+                      @click="$emit('classification-update', item, option.value)"
+                      :class="{ 'active-classification': item.classification === option.value }"
+                      class="classification-menu-item"
+                    >
+                      <template #prepend>
+                        <v-icon :color="classificationColor(option.value)" size="small">
+                          {{ getClassificationIcon(option.value) }}
+                        </v-icon>
+                      </template>
+                      <v-list-item-title class="classification-menu-title">
+                        {{ option.title }}
+                      </v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-card>
+              </v-menu>
+            </template>
+
+            <!-- Empty state -->
+            <template #no-data>
+              <div class="text-center py-8">
+                <v-icon size="64" color="grey lighten-2" class="mb-2">mdi-web-off</v-icon>
+                <div class="text-h6 text--secondary">No hay sitios web</div>
+                <div class="text-caption text--secondary mt-1">Agrega algunos sitios para comenzar</div>
+              </div>
+            </template>
+          </v-data-table>
+        </v-card>
+
+        <!-- Estadísticas -->
+        <v-card variant="tonal" class="mt-4 pa-3">
+          <div class="d-flex justify-space-around text-center">
+            <div v-for="stat in siteStats" :key="stat.label" class="stat-item">
+              <div class="text-h6 font-weight-bold" :class="stat.color">{{ stat.value }}</div>
+              <div class="text-caption text--secondary">{{ stat.label }}</div>
+            </div>
+          </div>
+        </v-card>
+      </template>
     </v-card>
   </v-container>
 </template>
 
 <script>
-import { apiService } from "../../services/api/api";
-
 export default {
   name: "SiteList",
+  props: {
+    sites: {
+      type: Array,
+      default: () => []
+    },
+    loading: {
+      type: Boolean,
+      default: false
+    },
+    errorMessage: {
+      type: String,
+      default: null
+    },
+    selectedFilter: {
+      type: String,
+      default: "Todos"
+    },
+    filteredSites: {
+      type: Array,
+      default: () => []
+    },
+    siteStats: {
+      type: Array,
+      default: () => []
+    }
+  },
+  emits: ['filter-change', 'classification-update', 'retry'],
   data() {
     return {
-      sites: [],
-      selectedFilter: "Todos",
       categoriesFilter: [
         "Todos",
         "Sin Categoría",
@@ -190,155 +236,76 @@ export default {
         'reddit.com': { icon: 'mdi-reddit', color: '#FF4500', bg: '#FFE8E6', name: 'Reddit' },
         'news.ycombinator.com': { icon: 'mdi-newspaper', color: '#FF6600', bg: '#FFF0E6', name: 'Hacker News' },
         
-        // Default
+        // Default - DEBE ESTAR SIEMPRE AL FINAL
         'default': { icon: 'mdi-earth', color: '#666666', bg: '#F5F5F5', name: 'Sitio Web' }
       }
     };
   },
-  computed: {
-    filteredSites() {
-      if (this.selectedFilter === "Todos") return this.sites;
-      if (this.selectedFilter === "Sin Categoría") {
-        return this.sites.filter(site => !site.classification || site.classification === "Sin Categoría");
-      }
-      return this.sites.filter(site => site.classification === this.selectedFilter);
-    },
-    siteStats() {
-      const total = this.sites.length;
-      const classified = this.sites.filter(site => site.classification && site.classification !== "Sin Categoría").length;
-      const productive = this.sites.filter(site => site.classification === "Productivo").length;
-      
-      return [
-        { label: "Total Sitios", value: total, color: "primary--text" },
-        { label: "Clasificados", value: classified, color: "green--text" },
-        { label: "Productivos", value: productive, color: "success--text" }
-      ];
-    }
-  },
   methods: {
-    async fetchSites() {
-      try {
-        const response = await apiService.getSites(1);
-        
-        console.log("Sitios cargados:", response);
-
-        if (!Array.isArray(response)) {
-          console.error("¡La API no devolvió un array!", response);
-          return;
-        }
-
-        this.sites = response.map(site => {
-          return {
-            id: site.id || site.dominio,
-            name: site.dominio,
-            classification: this.mapBackendClassification(site.categoria?.toLowerCase()),
-            rawData: site
-          };
-        });
-
-      } catch (error) {
-        console.error("Error cargando sitios:", error);
-      }
-    },
-
-    mapBackendClassification(backendClassification) {
-      if (!backendClassification) return "Sin Categoría";
-      const map = {
-        productivo: "Productivo",
-        neutral: "Neutral",
-        "doble filo": "Doble Filo",
-        distractor: "Distractor",
-        "sin categoria": "Sin Categoría",
-        "sin categoría": "Sin Categoría"
-      };
-      return map[backendClassification.trim().toLowerCase()] || "Sin Categoría";
-    },
-
-    async updateSiteClassification(site, newClassification) {
-      try {
-
-          if (site.classification === newClassification) {
-            return; 
-          }
-
-          const backendCategoryName = this.getBackendClassificationName(newClassification);
-          console.log("Nombre de categoría para backend:", backendCategoryName);
-
-          const result = await apiService.updateSiteClassification(
-              site.rawData.id, 
-              backendCategoryName,
-              1 // user_id
-          );
-
-          console.log("Respuesta del servidor:", result);
-
-          site.classification = newClassification;
-
-          this.$nextTick(() => {
-              console.log(`✅ Sitio ${site.name} actualizado a: ${site.classification}`);
-          });
-
-      } catch (error) {
-          console.error("❌ Error actualizando clasificación:", error);
-      }
-    },
-
-    getBackendClassificationName(frontendClassification) {
-      const map = {
-          "Productivo": "productivo",
-          "Neutral": "neutral", 
-          "Doble Filo": "doble filo",
-          "Distractor": "distractor",
-          "Sin Categoría": "sin categoria"
-      };
-      return map[frontendClassification] || "sin categoria";
-    },
+    // 🔧 SOLO MÉTODOS DE UI - SIN LÓGICA DE NEGOCIO
     
     extractDomainName(fullUrl) {
       if (!fullUrl) return 'Desconocido';
-      
-      let domain = fullUrl.toLowerCase();
-      domain = domain.replace(/^(https?:\/\/)?(www\.)?/, '');
-      domain = domain.split('/')[0];
-      domain = domain.split('?')[0];
-      
-      return domain;
+      try {
+        let domain = fullUrl.toLowerCase();
+        domain = domain.replace(/^(https?:\/\/)?(www\.)?/, '');
+        domain = domain.split('/')[0];
+        domain = domain.split('?')[0];
+        return domain;
+      } catch (error) {
+        console.warn("Error extrayendo dominio:", fullUrl, error);
+        return 'Desconocido';
+      }
     },
     
     getDomainInfo(domain) {
-      if (!domain) return this.domainPatterns.default;
-      
-      const cleanDomain = this.extractDomainName(domain);
-      
-      for (const [pattern, info] of Object.entries(this.domainPatterns)) {
-        if (pattern !== 'default' && cleanDomain === pattern) {
-          return info;
-        }
+      if (!domain) {
+        console.warn("Dominio vacío, usando default");
+        return this.domainPatterns.default;
       }
       
-      for (const [pattern, info] of Object.entries(this.domainPatterns)) {
-        if (pattern !== 'default' && cleanDomain.includes(pattern)) {
-          return info;
+      try {
+        const cleanDomain = this.extractDomainName(domain);
+        console.log("🔍 Buscando info para dominio:", cleanDomain);
+        
+        // Buscar coincidencia exacta primero
+        for (const [pattern, info] of Object.entries(this.domainPatterns)) {
+          if (pattern !== 'default' && cleanDomain === pattern) {
+            console.log("✅ Coincidencia exacta encontrada:", pattern);
+            return info;
+          }
         }
+        
+        // Buscar coincidencia parcial
+        for (const [pattern, info] of Object.entries(this.domainPatterns)) {
+          if (pattern !== 'default' && cleanDomain.includes(pattern)) {
+            console.log("✅ Coincidencia parcial encontrada:", pattern);
+            return info;
+          }
+        }
+        
+        console.log("ℹ️  Usando default para dominio:", cleanDomain);
+        return this.domainPatterns.default;
+        
+      } catch (error) {
+        console.error("Error en getDomainInfo:", domain, error);
+        return this.domainPatterns.default;
       }
-      
-      return this.domainPatterns.default;
     },
     
     getDomainIcon(domain) {
-      return this.getDomainInfo(domain).icon;
+      const info = this.getDomainInfo(domain);
+      return info?.icon || 'mdi-earth';
     },
     
     getDomainColor(domain) {
-      return this.getDomainInfo(domain).bg;
+      const info = this.getDomainInfo(domain);
+      return info?.bg || '#F5F5F5';
     },
     
     getDomainIconColor(domain) {
-      return this.getDomainInfo(domain).color;
-    },
-    
-    getDisplayName(domain) {
-      return this.getDomainInfo(domain).name;
+      const info = this.getDomainInfo(domain);
+      return info?.color || '#666666';
     },
 
     classificationColor(classification) {
@@ -374,9 +341,6 @@ export default {
       };
       return icons[classification] || "mdi-circle";
     }
-  },
-  mounted() {
-    this.fetchSites();
   }
 };
 </script>

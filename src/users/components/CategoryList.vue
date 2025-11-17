@@ -118,7 +118,7 @@ export default {
     async updateCategory(category) {
       try {
         // Actualiza en el servidor
-        await axios.put(`http://localhost:3001/categories/${category.id}`, category);
+        await axios.put(`http://localhost:8080/categories/${category.id}`, category);
 
         // Muestra el snackbar
         this.lastUpdatedCategory = category.name;

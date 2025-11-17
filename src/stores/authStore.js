@@ -1,19 +1,17 @@
+// stores/authStore.js
 import { defineStore } from "pinia";
+import { apiService } from "../services/api/api";
 
 const STORAGE_KEYS = {
   token: "focusguard-token",
-  user: "focusguard-user",
-  users: "focusguard-registered-users"
+  user: "focusguard-user"
 };
-
-const delay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
 
 const getStorage = () => (typeof window !== "undefined" ? window.localStorage : null);
 
 const readJSON = (key, fallback = null) => {
   const storage = getStorage();
   if (!storage) return fallback;
-
   try {
     const value = storage.getItem(key);
     return value ? JSON.parse(value) : fallback;
@@ -42,27 +40,31 @@ export const useAuthStore = defineStore("auth", {
     loading: false,
     error: null
   }),
+
   getters: {
-    isAuthenticated: state => Boolean(state.token)
+    isAuthenticated: state => Boolean(state.token),
+    // 🆕 GETTER PARA OBTENER EL USER ID
+    userId: (state) => state.user?.id || null
   },
+
   actions: {
-    async register({ name, email, password }) {
+    async register(userData) {
       this.error = null;
       this.loading = true;
 
       try {
-        await delay(800);
-        const users = readJSON(STORAGE_KEYS.users, []);
+        const response = await apiService.register(userData);
+        
+        // 🎯 OBTENER Y GUARDAR EL USUARIO CON SU ID
+        await this.fetchUserByEmail(userData.email);
 
-        if (users.some(user => user.email.toLowerCase() === email.toLowerCase())) {
-          throw new Error("El correo electrónico ya está registrado.");
-        }
+        // 🔐 HACER LOGIN AUTOMÁTICO
+        await this.login({
+          email: userData.email,
+          password: userData.password
+        });
 
-        const newUser = { name, email, password };
-        users.push(newUser);
-        writeJSON(STORAGE_KEYS.users, users);
-
-        await this.persistSession(newUser);
+        return response;
       } catch (error) {
         this.error = error.message || "Error al registrarse.";
         throw error;
@@ -70,22 +72,30 @@ export const useAuthStore = defineStore("auth", {
         this.loading = false;
       }
     },
-    async login({ email, password }) {
+
+    async login(credentials) {
       this.error = null;
       this.loading = true;
 
       try {
-        await delay(600);
-        const users = readJSON(STORAGE_KEYS.users, []);
-        const foundUser = users.find(
-          user => user.email.toLowerCase() === email.toLowerCase() && user.password === password
-        );
-
-        if (!foundUser) {
-          throw new Error("Credenciales inválidas. Verifica tu correo y contraseña.");
+        const response = await apiService.login(credentials);
+        
+        // Guardar token JWT
+        this.token = response.access_token;
+        
+        // 🎯 OBTENER DATOS DEL USUARIO CON SU ID
+        await this.fetchUserByEmail(credentials.email);
+        
+        // Guardar en localStorage
+        if (this.token) {
+          getStorage()?.setItem(STORAGE_KEYS.token, this.token);
+        }
+        if (this.user) {
+          writeJSON(STORAGE_KEYS.user, this.user);
         }
 
-        await this.persistSession(foundUser);
+        console.log("✅ Login exitoso. User ID:", this.user?.id); // Debug
+        return response;
       } catch (error) {
         this.error = error.message || "Error al iniciar sesión.";
         throw error;
@@ -93,6 +103,65 @@ export const useAuthStore = defineStore("auth", {
         this.loading = false;
       }
     },
+
+    async fetchUserByEmail(email) {
+      try {
+        const userProfile = await apiService.getUserByEmail(email);
+        
+        // 🎯 GUARDAR TODOS LOS DATOS INCLUYENDO EL ID
+        this.user = {
+          id: userProfile.id, // ✅ ESTO ES CRÍTICO
+          email: userProfile.correo,
+          firstName: userProfile.nombres,
+          lastName: userProfile.apellidos,
+          phone: userProfile.telefono,
+          registrationDate: userProfile.fecha_registro
+        };
+        
+        console.log("✅ Usuario obtenido por email. ID:", this.user.id); // Debug
+      } catch (error) {
+        console.error("❌ Error al obtener usuario por email:", error);
+        throw new Error("No se pudo obtener la información del usuario");
+      }
+    },
+
+    async requestPasswordReset(resetData) {
+      this.error = null;
+      this.loading = true;
+
+      try {
+        const response = await apiService.requestPasswordReset(resetData);
+        return response;
+      } catch (error) {
+        this.error = error.message || "Error al solicitar recuperación de contraseña";
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async confirmPasswordReset(confirmData) {
+      this.error = null;
+      this.loading = true;
+
+      try {
+        const response = await apiService.confirmPasswordReset(confirmData);
+        return response;
+      } catch (error) {
+        this.error = error.message || "Error al confirmar recuperación de contraseña";
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    checkAuth() {
+      const hasToken = Boolean(this.token);
+      const hasUser = Boolean(this.user?.id);
+      console.log("🔍 Estado de autenticación:", { hasToken, hasUser, user: this.user });
+      return hasToken && hasUser;
+    },
+
     logout() {
       this.user = null;
       this.token = null;
@@ -100,18 +169,9 @@ export const useAuthStore = defineStore("auth", {
       removeItem(STORAGE_KEYS.token);
       removeItem(STORAGE_KEYS.user);
     },
+
     clearError() {
       this.error = null;
-    },
-    async persistSession(user) {
-      const token = `token_${Math.random().toString(36).slice(2)}${Date.now()}`;
-      this.user = { name: user.name, email: user.email };
-      this.token = token;
-      writeJSON(STORAGE_KEYS.user, this.user);
-      const storage = getStorage();
-      if (storage) {
-        storage.setItem(STORAGE_KEYS.token, token);
-      }
     }
   }
 });

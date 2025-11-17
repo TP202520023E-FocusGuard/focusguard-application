@@ -22,7 +22,7 @@ export default {
     // Carga las categorías desde el servidor
     const loadCategories = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/categories');
+        const response = await axios.get('http://localhost:8080/categories');
         categories.value = response.data;
       } catch (error) {
         console.error('Error cargando categorías:', error);

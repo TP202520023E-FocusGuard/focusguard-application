@@ -35,5 +35,15 @@ export const menuItems = [
     name: "Tracking",
     icon: "mdi-chart-bar",
     route: "/tracking"
+  },
+  {
+    name: "Dashboard",
+    icon: "mdi-view-dashboard",
+    route: "/dashboard"
+  },
+  {
+    name: "Metas",
+    icon: "mdi-flag-checkered",
+    route: "/goals"
   }
 ];

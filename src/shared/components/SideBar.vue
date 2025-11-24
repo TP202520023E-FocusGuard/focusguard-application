@@ -1,0 +1,660 @@
+<template>
+  <v-navigation-drawer
+    app
+    permanent
+    class="modern-sidebar"
+    elevation="3"
+    width="280"
+    :style="sidebarStyles"
+  >
+    <div class="sidebar-header">
+      <div class="logo-container">
+        <div class="logo-icon-wrapper">
+          <v-icon color="white" size="28">mdi-shield-account</v-icon>
+        </div>
+        <div class="logo-text">
+          <div class="app-name">FocusGuard</div>
+          <div class="app-subtitle">Productivity Suite</div>
+        </div>
+      </div>
+    </div>
+
+    <v-list
+      density="compact"
+      class="sidebar-menu"
+      nav
+    >
+      <template v-for="(item, index) in menuItems" :key="index">
+        <div v-if="item.children" class="custom-menu-group">
+          <v-list-item
+            class="menu-item"
+            :class="{ 'active-group': openStates[item.name] }"
+            @click="toggleMenu(item.name)"
+          >
+            <template #prepend>
+              <div class="icon-wrapper">
+                <v-icon
+                  class="menu-icon"
+                  :class="{ 'active-icon': openStates[item.name] }"
+                >
+                  {{ item.icon }}
+                </v-icon>
+              </div>
+            </template>
+
+            <v-list-item-title class="menu-title">
+              {{ item.name }}
+            </v-list-item-title>
+
+            <template #append>
+              <v-icon
+                class="arrow-icon"
+                :class="{ 'rotate-arrow': openStates[item.name] }"
+              >
+                mdi-chevron-down
+              </v-icon>
+            </template>
+          </v-list-item>
+
+          <transition name="menu-expand" @enter="onMenuExpand" @leave="onMenuCollapse">
+            <div v-if="openStates[item.name]" class="submenu-container">
+              <v-list-item
+                v-for="(child, cIndex) in item.children"
+                :key="child.name"
+                :to="child.route"
+                class="submenu-item"
+                active-class="active-subitem"
+                @click="handleSubmenuClick"
+              >
+                <template #prepend>
+                  <div class="submenu-indicator">
+                    <div class="submenu-dot"></div>
+                  </div>
+                </template>
+
+                <v-list-item-title class="submenu-title">
+                  {{ child.name }}
+                </v-list-item-title>
+
+                <template #append>
+                  <v-icon
+                    v-if="child.icon"
+                    size="small"
+                    class="submenu-icon"
+                  >
+                    {{ child.icon }}
+                  </v-icon>
+                </template>
+              </v-list-item>
+            </div>
+          </transition>
+        </div>
+
+        <v-list-item
+          v-else
+          :to="item.route"
+          class="menu-item"
+          active-class="active-item"
+          @click="closeAllMenus"
+        >
+          <template #prepend>
+            <div class="icon-wrapper">
+              <v-icon class="menu-icon">
+                {{ item.icon }}
+              </v-icon>
+            </div>
+          </template>
+
+          <v-list-item-title class="menu-title">
+            {{ item.name }}
+          </v-list-item-title>
+        </v-list-item>
+
+        <v-divider
+          v-if="index < menuItems.length - 1"
+          class="menu-divider"
+        />
+      </template>
+    </v-list>
+
+    <div class="sidebar-footer">
+      <div class="user-section" v-if="authStore.user">
+        <v-avatar size="40" color="rgba(255, 255, 255, 0.2)" class="user-avatar">
+          <v-icon color="white" size="20">mdi-account</v-icon>
+        </v-avatar>
+        <div class="user-info">
+          <div class="user-name">{{ authStore.user.name }}</div>
+          <div class="user-status">
+            <span class="status-dot"></span>
+            En línea
+          </div>
+        </div>
+      </div>
+
+      <v-btn
+        class="logout-btn"
+        variant="flat"
+        color="error"
+        size="large"
+        block
+        @click="handleLogout"
+      >
+        <v-icon start>mdi-logout</v-icon>
+        Cerrar Sesión
+      </v-btn>
+    </div>
+  </v-navigation-drawer>
+</template>
+
+<script>
+import { computed } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "../../stores/authStore";
+import { useThemeStore } from "../../stores/themeStore";
+import { menuItems } from "../data/menu.js";
+
+export default {
+  name: "Sidebar",
+  data() {
+    return {
+      menuItems,
+      openStates: {},
+      closingMenu: null
+    };
+  },
+  setup() {
+    const router = useRouter();
+    const authStore = useAuthStore();
+    const themeStore = useThemeStore();
+
+    const hexToRgba = (hex, alpha) => {
+      if (!hex) return `rgba(76, 161, 175, ${alpha})`;
+
+      if (hex.startsWith("rgb")) {
+        const values = hex.match(/\d+/g);
+        if (values && values.length >= 3) {
+          return `rgba(${values[0]}, ${values[1]}, ${values[2]}, ${alpha})`;
+        }
+      }
+
+      let sanitized = hex.replace("#", "");
+      if (sanitized.length === 3) {
+        sanitized = sanitized
+          .split("")
+          .map(char => char + char)
+          .join("");
+      }
+
+      const bigint = parseInt(sanitized, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+
+    const sidebarStyles = computed(() => {
+      const colors = themeStore.themeColors || {};
+      const primary = colors.primary || "#1e2a38";
+      const secondary = colors.secondary || "#18202c";
+      const accent = colors.accent || "#4ca1af";
+
+      return {
+        background: `linear-gradient(180deg, ${primary} 0%, ${secondary} 100%)`,
+        "--sidebar-accent": accent,
+        "--sidebar-accent-10": hexToRgba(accent, 0.1),
+        "--sidebar-accent-15": hexToRgba(accent, 0.15),
+        "--sidebar-accent-18": hexToRgba(accent, 0.18),
+        "--sidebar-accent-25": hexToRgba(accent, 0.25),
+        "--sidebar-accent-90": hexToRgba(accent, 0.9)
+      };
+    });
+
+    const handleLogout = () => {
+      authStore.logout();
+      router.push({ name: "login" });
+    };
+
+    return {
+      authStore,
+      handleLogout,
+      sidebarStyles
+    };
+  },
+  methods: {
+    toggleMenu(menuName) {
+      const wasOpen = this.openStates[menuName];
+      
+      // Si el menú ya está abierto, lo cerramos
+      if (wasOpen) {
+        this.openStates[menuName] = false;
+        return;
+      }
+
+      // Cerramos solo los otros menús, manteniendo el actual si está abierto
+      const newState = { ...this.openStates };
+      Object.keys(newState).forEach(key => {
+        if (key !== menuName) {
+          newState[key] = false;
+        }
+      });
+      
+      // Abrimos el nuevo menú
+      newState[menuName] = true;
+      this.openStates = newState;
+    },
+
+    onMenuExpand(el) {
+      el.style.height = '0';
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(-10px)';
+      
+      requestAnimationFrame(() => {
+        el.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        el.style.height = el.scrollHeight + 'px';
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      });
+    },
+
+    onMenuCollapse(el) {
+      el.style.transition = 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+      el.style.height = '0';
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(-10px)';
+    },
+
+    handleSubmenuClick() {
+    },
+
+    closeAllMenus() {
+      const newState = {};
+      this.menuItems.forEach(item => {
+        if (item.children) {
+          newState[item.name] = false;
+        }
+      });
+      this.openStates = newState;
+    }
+  },
+  mounted() {
+    const initialState = {};
+    this.menuItems.forEach(item => {
+      if (item.children) {
+        initialState[item.name] = false;
+      }
+    });
+    this.openStates = initialState;
+  }
+};
+</script>
+
+<style scoped>
+.modern-sidebar {
+  background: linear-gradient(
+    180deg,
+    var(--theme-primary, #1e2a38) 0%,
+    var(--theme-secondary, #18202c) 100%
+  );
+  color: white;
+  border-right: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sidebar-header {
+  padding: 24px 24px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo-icon-wrapper {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.05));
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.2);
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-name {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.app-subtitle {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.sidebar-menu {
+  padding: 12px 12px 0;
+  flex-grow: 1;
+}
+
+.menu-item {
+  border-radius: 12px;
+  margin-bottom: 6px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.menu-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.1), 
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.menu-item:hover::before {
+  left: 100%;
+}
+
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(4px);
+}
+
+.active-item {
+  background: var(--sidebar-accent-25, rgba(76, 161, 175, 0.25)) !important;
+  border-left: 3px solid var(--sidebar-accent) !important;
+}
+
+.active-group {
+  background: var(--sidebar-accent-15, rgba(76, 161, 175, 0.15)) !important;
+  border-left: 3px solid var(--sidebar-accent) !important;
+}
+
+.icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.menu-item:hover .icon-wrapper {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.menu-icon {
+  color: rgba(255, 255, 255, 0.85);
+  transition: all 0.3s ease;
+}
+
+.active-icon {
+  color: white !important;
+  background: linear-gradient(135deg, var(--sidebar-accent), var(--sidebar-accent-90)) !important;
+  border-radius: 10px !important;
+  padding: 4px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.menu-title {
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  transition: all 0.3s ease;
+}
+
+.arrow-icon {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.rotate-arrow {
+  transform: rotate(180deg);
+  color: var(--sidebar-accent) !important;
+}
+
+/* Transiciones optimizadas para submenús */
+.submenu-container {
+  padding-left: 12px;
+  overflow: hidden;
+}
+
+.menu-expand-enter-active,
+.menu-expand-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.menu-expand-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+  height: 0;
+}
+
+.menu-expand-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+  height: 0;
+}
+
+.submenu-item {
+  border-radius: 10px;
+  margin: 4px 0;
+  padding-left: 12px;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.submenu-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.05), 
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.submenu-item:hover::before {
+  left: 100%;
+}
+
+.submenu-item:hover {
+  background: var(--sidebar-accent-18, rgba(76, 161, 175, 0.18));
+  transform: translateX(4px);
+}
+
+.active-subitem {
+  background: var(--sidebar-accent-25, rgba(76, 161, 175, 0.25)) !important;
+  color: white !important;
+  border-left: 2px solid var(--sidebar-accent) !important;
+  margin-left: 8px;
+}
+
+.active-subitem .submenu-dot {
+  background: white !important;
+  box-shadow: 0 0 8px var(--sidebar-accent) !important;
+  transform: scale(1.2);
+}
+
+.submenu-indicator {
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.submenu-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sidebar-accent-90, rgba(76, 161, 175, 0.9));
+  transition: all 0.3s ease;
+}
+
+.submenu-title {
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.submenu-icon {
+  color: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.submenu-item:hover .submenu-icon {
+  color: rgba(255, 255, 255, 0.8);
+  transform: scale(1.1);
+}
+
+.menu-divider {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  margin: 8px 0;
+}
+
+.sidebar-footer {
+  padding: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.user-name {
+  font-weight: 600;
+}
+
+.user-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4caf50;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Botón de cerrar sesión */
+.logout-btn {
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  background: linear-gradient(135deg, #f44336, #d32f2f) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 
+    0 4px 14px rgba(244, 67, 54, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  height: 48px !important;
+  border-radius: 12px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.logout-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.2), 
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.logout-btn:hover {
+  background: linear-gradient(135deg, #ff5252, #e53935) !important;
+  box-shadow: 
+    0 6px 20px rgba(244, 67, 54, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+.logout-btn:hover::before {
+  left: 100%;
+}
+
+.logout-btn:active {
+  transform: translateY(0) !important;
+  box-shadow: 
+    0 2px 8px rgba(244, 67, 54, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.logout-btn :deep(.v-icon) {
+  color: white !important;
+}
+
+.logout-btn:hover :deep(.v-btn__content) {
+  filter: brightness(1.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .logout-btn {
+    height: 44px !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .sidebar-header {
+    padding: 20px 16px 12px;
+  }
+  
+  .sidebar-footer {
+    padding: 20px;
+  }
+}
+</style>

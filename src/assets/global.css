@@ -1,0 +1,71 @@
+/* src/assets/global.css */
+:root {
+  /* Tema por defecto (Blue Ocean) */
+  --theme-primary: #1e3c72;
+  --theme-secondary: #2a5298;
+  --theme-accent: #667eea;
+  --theme-background: #f8fafc;
+  --theme-surface: #ffffff;
+  --theme-text: #1e293b;
+  --theme-textSecondary: #64748b;
+}
+
+/* Aplicar a toda la aplicación */
+.v-application {
+  background-color: var(--theme-background) !important;
+  color: var(--theme-text) !important;
+}
+
+/* Sidebar con colores dinámicos */
+.modern-sidebar {
+  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%) !important;
+}
+
+.logo-icon-wrapper {
+  background: linear-gradient(135deg, var(--theme-accent) 0%, var(--theme-secondary) 100%) !important;
+}
+
+.menu-item::before {
+  background: linear-gradient(135deg, var(--theme-accent), var(--theme-secondary)) !important;
+}
+
+/* Botones primarios */
+.v-btn.primary {
+  background: linear-gradient(135deg, var(--theme-primary), var(--theme-secondary)) !important;
+}
+
+/* Tarjetas */
+.v-card {
+  background: var(--theme-surface) !important;
+  color: var(--theme-text) !important;
+}
+
+/* Textos */
+.text-primary {
+  color: var(--theme-primary) !important;
+}
+
+.text-secondary {
+  color: var(--theme-textSecondary) !important;
+}
+
+/* Componentes específicos de tu app */
+.elegant-card {
+  background: var(--theme-surface) !important;
+  border: 1px solid var(--theme-primary) !important;
+}
+
+.compact-settings-card {
+  background: var(--theme-surface) !important;
+}
+
+/* Chips y badges */
+.v-chip {
+  background: var(--theme-accent) !important;
+}
+
+/* Tablas */
+.v-data-table {
+  background: var(--theme-surface) !important;
+  color: var(--theme-text) !important;
+}

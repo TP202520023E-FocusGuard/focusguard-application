@@ -1,6 +1,5 @@
 <template>
   <v-container>
-    <!-- Lista de categorías sin filtros -->
     <CategoryList
       :categories="categories"
       @update="handleCategoryUpdate"
@@ -19,7 +18,6 @@ export default {
   setup() {
     const categories = ref([]);
 
-    // Carga las categorías desde el servidor
     const loadCategories = async () => {
       try {
         const response = await axios.get('http://localhost:8080/categories');
@@ -29,19 +27,15 @@ export default {
       }
     };
 
-    // Maneja la actualización de una categoría
     const handleCategoryUpdate = (updatedCategory) => {
-      // Actualiza la categoría en el array local
       const index = categories.value.findIndex(c => c.id === updatedCategory.id);
       if (index !== -1) {
         categories.value[index] = updatedCategory;
       }
     };
 
-    // Maneja el guardado de todas las categorías
     const handleSave = (updatedCategories) => {
       console.log('Categorías guardadas:', updatedCategories);
-      // Aquí puedes agregar lógica adicional al guardar
     };
 
     onMounted(loadCategories);

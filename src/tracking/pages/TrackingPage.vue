@@ -1,4 +1,3 @@
-<!-- pages/TrackingPage.vue -->
 <template>
   <div class="tracking-page">
     <SiteList
@@ -45,10 +44,10 @@ export default {
         this.errorMessage = null;
         
         this.sites = await siteService.getSites();
-        console.log(`✅ ${this.sites.length} sitios cargados exitosamente`);
+        console.log(`${this.sites.length} sitios cargados exitosamente`);
 
       } catch (error) {
-        console.error("❌ Error cargando sitios:", error);
+        console.error("Error cargando sitios:", error);
         this.errorMessage = "Error al cargar los sitios web: " + error.message;
       } finally {
         this.loading = false;
@@ -65,10 +64,10 @@ export default {
         site.classification = newClassification;
         this.errorMessage = null;
 
-        console.log(`✅ Sitio ${site.name} actualizado a: ${site.classification}`);
+        console.log(`Sitio ${site.name} actualizado a: ${site.classification}`);
 
       } catch (error) {
-        console.error("❌ Error actualizando clasificación:", error);
+        console.error("Error actualizando clasificación:", error);
         this.errorMessage = "Error al actualizar clasificación: " + error.message;
       }
     },

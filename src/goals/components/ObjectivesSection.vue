@@ -93,31 +93,6 @@ export default {
   data() {
     return {
       objectives: [
-        // Datos de ejemplo
-        {
-          id: 1,
-          text: "Estudiar Vue.js por 2 horas",
-          completed: false,
-          datos: { tipo: 'mas', horas: 2, minutos: 0, categoriaPrincipal: { title: 'Categorización de sitio', value: 'categorizacion_sitio' }, subcategoria: { title: 'Productivo', value: 'productivo' } }
-        },
-        {
-          id: 2,
-          text: "Reducir tiempo en redes sociales",
-          completed: true,
-          datos: { tipo: 'menos', horas: 1, minutos: 30, categoriaPrincipal: { title: 'Clasificación de contenido', value: 'clasificacion_contenido' }, subcategoria: { title: 'Ocio', value: 'ocio' } }
-        },
-        {
-          id: 3,
-          text: "Practicar inglés 45 minutos",
-          completed: false,
-          datos: { tipo: 'mas', horas: 0, minutos: 45, categoriaPrincipal: { title: 'Categorización de sitio', value: 'categorizacion_sitio' }, subcategoria: { title: 'Productivo', value: 'productivo' } }
-        },
-        {
-          id: 4,
-          text: "Leer libro técnico",
-          completed: false,
-          datos: { tipo: 'mas', horas: 1, minutos: 0, categoriaPrincipal: { title: 'Clasificación de contenido', value: 'clasificacion_contenido' }, subcategoria: { title: 'No Ocio', value: 'no_ocio' } }
-        }
       ],
       showNewObjectiveDialog: false,
       objectiveToEdit: null

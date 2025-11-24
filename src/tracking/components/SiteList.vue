@@ -2,7 +2,6 @@
 <template>
   <v-container fluid class="pa-4">
     <v-card class="elegant-card pa-4" elevation="2">
-      <!-- Header -->
       <div class="text-center mb-4">
         <v-icon color="primary" size="48" class="mb-2">mdi-web</v-icon>
         <h2 class="text-h5 font-weight-bold primary--text mb-1">
@@ -13,7 +12,6 @@
         </p>
       </div>
 
-      <!-- Indicadores de estado -->
       <v-alert v-if="loading" type="info" variant="tonal" class="mb-4">
         <div class="d-flex align-center">
           <v-progress-circular indeterminate size="20" class="mr-3"></v-progress-circular>
@@ -30,9 +28,7 @@
         </div>
       </v-alert>
 
-      <!-- Contenido principal -->
       <template v-if="!errorMessage && !loading">
-        <!-- Filtros -->
         <v-card variant="outlined" class="pa-3 mb-4">
           <div class="text-caption font-weight-medium mb-2 text-center">Filtrar por categoría:</div>
           <div class="d-flex flex-wrap gap-2 justify-center">
@@ -51,7 +47,6 @@
           </div>
         </v-card>
 
-        <!-- Tabla -->
         <v-card variant="outlined" class="elevation-1">
           <v-data-table
             :headers="headers"
@@ -61,7 +56,6 @@
             density="comfortable"
             class="site-table"
           >
-            <!-- Columna Dominio -->
             <template #item.name="{ item }">
               <div class="d-flex align-center">
                 <v-avatar size="32" :color="getDomainColor(item.name)" class="mr-3">
@@ -76,7 +70,6 @@
               </div>
             </template>
 
-            <!-- Columna Clasificación -->
             <template #item.classification="{ item }">
               <v-menu location="bottom" :close-on-content-click="true">
                 <template v-slot:activator="{ props }">
@@ -116,7 +109,6 @@
               </v-menu>
             </template>
 
-            <!-- Empty state -->
             <template #no-data>
               <div class="text-center py-8">
                 <v-icon size="64" color="grey lighten-2" class="mb-2">mdi-web-off</v-icon>
@@ -127,7 +119,6 @@
           </v-data-table>
         </v-card>
 
-        <!-- Estadísticas -->
         <v-card variant="tonal" class="mt-4 pa-3">
           <div class="d-flex justify-space-around text-center">
             <div v-for="stat in siteStats" :key="stat.label" class="stat-item">
@@ -242,8 +233,6 @@ export default {
     };
   },
   methods: {
-    // 🔧 SOLO MÉTODOS DE UI - SIN LÓGICA DE NEGOCIO
-    
     extractDomainName(fullUrl) {
       if (!fullUrl) return 'Desconocido';
       try {
@@ -266,12 +255,12 @@ export default {
       
       try {
         const cleanDomain = this.extractDomainName(domain);
-        console.log("🔍 Buscando info para dominio:", cleanDomain);
+        console.log("Buscando info para dominio:", cleanDomain);
         
         // Buscar coincidencia exacta primero
         for (const [pattern, info] of Object.entries(this.domainPatterns)) {
           if (pattern !== 'default' && cleanDomain === pattern) {
-            console.log("✅ Coincidencia exacta encontrada:", pattern);
+            console.log("Coincidencia exacta encontrada:", pattern);
             return info;
           }
         }
@@ -279,12 +268,12 @@ export default {
         // Buscar coincidencia parcial
         for (const [pattern, info] of Object.entries(this.domainPatterns)) {
           if (pattern !== 'default' && cleanDomain.includes(pattern)) {
-            console.log("✅ Coincidencia parcial encontrada:", pattern);
+            console.log("Coincidencia parcial encontrada:", pattern);
             return info;
           }
         }
         
-        console.log("ℹ️  Usando default para dominio:", cleanDomain);
+        console.log("Usando default para dominio:", cleanDomain);
         return this.domainPatterns.default;
         
       } catch (error) {
@@ -383,7 +372,6 @@ export default {
   gap: 8px;
 }
 
-/* ESTILOS PARA EL NUEVO DROPDOWN */
 :deep(.classification-menu-card) {
   background: white !important;
   border: 1px solid #e0e0e0 !important;
@@ -431,7 +419,6 @@ export default {
   z-index: 9999 !important;
 }
 
-/* Responsive */
 @media (max-width: 960px) {
   .elegant-card {
     padding: 16px !important;

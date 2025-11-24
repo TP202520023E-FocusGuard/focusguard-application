@@ -148,6 +148,7 @@
 <script>
 
 import { apiService } from '../../services/api/api.js';
+import { useAuthStore } from '../../stores/authStore.js';
 export default {
   name: 'LeisureTimeConfig',
   data() {
@@ -169,8 +170,10 @@ export default {
   methods: {
     async loadConfiguration() {
       try {
+        const authStore = useAuthStore();
+        const userId = authStore.user?.id
         this.loading = true;
-        const config = await apiService.getTimeConfiguration(1); // userId = 1 por ahora
+        const config = await apiService.getTimeConfiguration(userId); // userId = 1 por ahora
         
         this.userConfig = config;
         this.leisureTime = config.tiempo_ocio_diario || 30;
@@ -211,8 +214,9 @@ export default {
           idioma: this.userConfig?.idioma || 'es',
           bloqueo_automatico: this.userConfig?.bloqueo_automatico || true
         };
-        
-        const response = await apiService.updateTimeConfiguration(configData);
+        const authStore = useAuthStore();
+        const userId = authStore.user?.id;
+        const response = await apiService.updateTimeConfiguration(configData, userId);
         
         this.originalLeisureTime = this.leisureTime;
         this.showSuccess = true;

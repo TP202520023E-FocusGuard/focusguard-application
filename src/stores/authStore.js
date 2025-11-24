@@ -43,7 +43,7 @@ export const useAuthStore = defineStore("auth", {
 
   getters: {
     isAuthenticated: state => Boolean(state.token),
-    // 🆕 GETTER PARA OBTENER EL USER ID
+    // GETTER PARA OBTENER EL USER ID
     userId: (state) => state.user?.id || null
   },
 
@@ -55,10 +55,10 @@ export const useAuthStore = defineStore("auth", {
       try {
         const response = await apiService.register(userData);
         
-        // 🎯 OBTENER Y GUARDAR EL USUARIO CON SU ID
+        // OBTENER Y GUARDAR EL USUARIO CON SU ID
         await this.fetchUserByEmail(userData.email);
 
-        // 🔐 HACER LOGIN AUTOMÁTICO
+        // HACER LOGIN AUTOMÁTICO
         await this.login({
           email: userData.email,
           password: userData.password
@@ -108,9 +108,9 @@ export const useAuthStore = defineStore("auth", {
       try {
         const userProfile = await apiService.getUserByEmail(email);
         
-        // 🎯 GUARDAR TODOS LOS DATOS INCLUYENDO EL ID
+        // GUARDAR TODOS LOS DATOS INCLUYENDO EL ID
         this.user = {
-          id: userProfile.id, // ✅ ESTO ES CRÍTICO
+          id: userProfile.id,
           email: userProfile.correo,
           firstName: userProfile.nombres,
           lastName: userProfile.apellidos,
@@ -118,9 +118,9 @@ export const useAuthStore = defineStore("auth", {
           registrationDate: userProfile.fecha_registro
         };
         
-        console.log("✅ Usuario obtenido por email. ID:", this.user.id); // Debug
+        console.log("Usuario obtenido por email. ID:", this.user.id);
       } catch (error) {
-        console.error("❌ Error al obtener usuario por email:", error);
+        console.error("Error al obtener usuario por email:", error);
         throw new Error("No se pudo obtener la información del usuario");
       }
     },

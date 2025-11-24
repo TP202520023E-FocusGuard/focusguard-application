@@ -1,7 +1,6 @@
 <template>
   <div>
     <v-card class="compact-card pa-4" elevation="2">
-      <!-- Header compacto -->
       <div class="text-center mb-4">
         <v-icon :color="themeStore.themeColors.primary" size="48" class="mb-1">mdi-brain</v-icon>
         <h2 class="text-h5 font-weight-bold mb-1" :style="{ color: themeStore.themeColors.primary }">
@@ -12,7 +11,6 @@
         </p>
       </div>
 
-      <!-- Grid compacto de opciones -->
       <v-row class="mt-1" dense>
         <v-col cols="12" sm="6" lg="4" v-for="(category, index) in categories" :key="category.id">
           <v-card 
@@ -27,7 +25,6 @@
             :ripple="true"
           >
             <div class="d-flex align-center justify-space-between">
-              <!-- Checkbox y texto -->
               <div class="d-flex align-center">
                 <v-icon 
                   :color="category.isProcrastination ? 'white' : 'grey lighten-1'"
@@ -44,7 +41,6 @@
                 </span>
               </div>
               
-              <!-- Indicador minimalista -->
               <v-icon 
                 v-if="category.isProcrastination"
                 color="white"
@@ -58,7 +54,6 @@
         </v-col>
       </v-row>
 
-      <!-- Botón compacto -->
       <v-card-actions class="justify-center mt-4 pt-2">
         <v-btn 
           :color="themeStore.themeColors.primary" 
@@ -73,7 +68,6 @@
       </v-card-actions>
     </v-card>
 
-    <!-- Snackbar compacto -->
     <v-snackbar 
       v-model="showSnackbar" 
       timeout="2000" 
@@ -117,15 +111,12 @@ export default {
   methods: {
     async updateCategory(category) {
       try {
-        // Actualiza en el servidor
         await axios.put(`http://localhost:8080/categories/${category.id}`, category);
 
-        // Muestra el snackbar
         this.lastUpdatedCategory = category.name;
         this.lastAction = category.isProcrastination ? 'seleccionada' : 'deseleccionada';
         this.showSnackbar = true;
 
-        // Emite el evento para notificar al componente padre
         this.$emit('update', category);
       } catch (error) {
         console.error('Error updating category:', error);
@@ -163,14 +154,12 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* SOLO EL GRADIENTE CAMBIA CON EL TEMA - texto siempre normal */
 .selected-compact {
   background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%) !important;
   border-color: var(--theme-primary) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
-/* Texto en seleccionados - SIEMPRE BLANCO */
 .selected-compact .compact-text {
   color: white !important;
 }
@@ -185,9 +174,8 @@ export default {
   background: #f5f9ff;
 }
 
-/* Texto en no seleccionados - SIEMPRE NORMAL */
 .unselected-compact .compact-text {
-  color: #1e293b !important; /* Color fijo normal */
+  color: #1e293b !important;
 }
 
 .compact-checkbox {
@@ -218,7 +206,6 @@ export default {
   box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3) !important;
 }
 
-/* Animaciones optimizadas */
 @keyframes compactCheck {
   0% {
     transform: scale(0.8);
@@ -231,7 +218,6 @@ export default {
   }
 }
 
-/* Responsive mejorado */
 @media (max-width: 960px) {
   .compact-card {
     padding: 16px !important;
@@ -265,14 +251,12 @@ export default {
   }
 }
 
-/* Para muchas categorías - layout más denso */
 @media (min-width: 1280px) {
   .compact-option-card {
     min-height: 44px;
   }
 }
 
-/* Efecto de selección sutil */
 .selected-compact {
   animation: selectCompact 0.2s ease;
 }

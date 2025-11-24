@@ -2,7 +2,6 @@ import { apiService } from '../../services/api/api';
 import { useAuthStore } from '../../stores/authStore';
 
 export const siteService = {
-    // Obtener todos los sitios del usuario autenticado
     async getSites() {
         try {
             const authStore = useAuthStore();
@@ -22,47 +21,32 @@ export const siteService = {
         }
     },
 
-    // Actualizar clasificación de un sitio
     async updateSiteClassification(siteId, newClassification) {
         try {
             const authStore = useAuthStore();
             const userId = authStore.user?.id;
             
-            console.log("🔍 DEBUG - TrackingService:", {
-                userId, 
-                siteId, 
-                newClassification 
-            });
             
             if (!userId) {
                 throw new Error("Usuario no autenticado");
             }
 
             const backendCategoryName = this.getBackendClassificationName(newClassification);
-            
-            console.log("🔄 Actualizando clasificación - llamando a apiService:", {
-                siteId,
-                newClassification,
-                userId, // ✅ userId está disponible aquí
-                backendCategoryName
-            });
 
-            // ✅ Asegúrate de pasar TODOS los parámetros en el orden correcto
             const result = await apiService.updateSiteClassification(
                 siteId, 
                 backendCategoryName, 
-                userId  // ✅ Pasar userId como tercer parámetro
+                userId 
             );
 
-            console.log("✅ Clasificación actualizada:", result);
             return result;
 
         } catch (error) {
-            console.error("❌ Error en siteService.updateSiteClassification:", error);
+            console.error("Error en siteService.updateSiteClassification:", error);
             throw error;
         }
     },
-    // Mapear clasificación del backend al frontend
+    
     mapBackendClassification(backendClassification) {
         if (!backendClassification) return "Sin Categoría";
         const map = {
@@ -76,7 +60,6 @@ export const siteService = {
         return map[backendClassification.trim().toLowerCase()] || "Sin Categoría";
     },
 
-    // Mapear clasificación del frontend al backend
     getBackendClassificationName(frontendClassification) {
         const map = {
             "Productivo": "productivo",
@@ -88,7 +71,6 @@ export const siteService = {
         return map[frontendClassification] || "sin categoria";
     },
 
-    // Procesar datos de sitios para el frontend
     processSitesData(sites) {
         if (!Array.isArray(sites)) {
             throw new Error("Los sitios deben ser un array");
@@ -102,7 +84,6 @@ export const siteService = {
         }));
     },
 
-    // Obtener estadísticas de sitios
     getSiteStats(sites) {
         const total = sites.length;
         const classified = sites.filter(site => site.classification && site.classification !== "Sin Categoría").length;
@@ -115,7 +96,6 @@ export const siteService = {
         ];
     },
 
-    // Filtrar sitios por categoría
     filterSites(sites, selectedFilter) {
         if (selectedFilter === "Todos") return sites;
         if (selectedFilter === "Sin Categoría") {

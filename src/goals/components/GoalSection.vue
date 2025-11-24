@@ -1,6 +1,5 @@
 <template>
   <v-card variant="outlined" class="goals-section pa-3 compact-card" elevation="1">
-    <!-- Header compacto -->
     <div class="section-header compact-header">
       <div class="icon-wrapper compact-icon">
         <v-icon color="white" size="20">mdi-trophy</v-icon>
@@ -13,9 +12,7 @@
       </div>
     </div>
 
-    <!-- Contenido compacto -->
     <div class="goal-content compact-content">
-      <!-- Estado: Edición -->
       <div v-if="!savedGoal" class="goal-edit compact-edit">
         <v-textarea
           v-model="currentGoal"
@@ -53,7 +50,6 @@
         </v-btn>
       </div>
 
-      <!-- Estado: Visualización -->
       <v-card v-else variant="flat" class="saved-goal-card compact-saved">
         <div class="saved-goal-content compact-saved-content">
           <div class="saved-goal-text">
@@ -88,8 +84,8 @@ export default {
     return {
       currentGoal: '',
       savedGoal: '',
-      goalId: null, // Para guardar el ID de la meta existente
-      userId: 1, // Por ahora hardcodeado, luego puedes obtenerlo del auth
+      goalId: null,
+      userId: 1,
       loading: false
     };
   },
@@ -249,7 +245,6 @@ export default {
   min-height: 60px !important;
 }
 
-/* BOTÓN GUARDAR MEJORADO */
 .enhanced-save-btn {
   background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%) !important;
   border: none;
@@ -333,7 +328,6 @@ export default {
   50% { transform: scale(1.02); }
 }
 
-/* BOTÓN EDITAR MEJORADO */
 .enhanced-edit-btn {
   background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%) !important;
   color: white !important;

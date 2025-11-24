@@ -1,9 +1,11 @@
 import { apiService } from '../../services/api/api';
+import { useAuthStore } from '../../stores/authStore';
 
 export const goalsService = {
-    // Métodos para metas (goals)
-    async getGoal(userId = 1) {
+    async getGoal(userId) {
         try {
+            const authStore = useAuthStore();
+            userId = authStore.user?.id;
             const goals = await apiService.getGoalsByUser(userId);
             return goals.length > 0 ? goals[0] : null;
         } catch (error) {
@@ -14,7 +16,6 @@ export const goalsService = {
 
     async saveGoal(goalData) {
         try {
-            // AHORA usa el endpoint específico por usuario
             const goals = await apiService.getGoalsByUser(goalData.id_usuarios);
             const userGoal = goals.length > 0 ? goals[0] : null;
             

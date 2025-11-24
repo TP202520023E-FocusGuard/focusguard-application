@@ -110,7 +110,7 @@ export const apiService = {
         }
     },
 
-    async getTimeConfiguration(userId = 1) {
+    async getTimeConfiguration(userId) {
         try {
             const response = await fetch(`${API_BASE}/configuration/${userId}`);
             return await handleResponse(response);
@@ -120,7 +120,7 @@ export const apiService = {
         }
     },
 
-    async updateTimeConfiguration(configData, userId = 1) {
+    async updateTimeConfiguration(configData, userId) {
         try {
             const response = await fetch(`${API_BASE}/configuration/${userId}`, {
                 method: 'PUT',
@@ -134,7 +134,7 @@ export const apiService = {
         }
     },
 
-    async getGoalsByUser(userId = 1){
+    async getGoalsByUser(userId){
         try {
             const response = await fetch(`${API_BASE}/goals/user/${userId}`);
             return await handleResponse(response);
@@ -251,7 +251,6 @@ export const apiService = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    token: confirmData.token,
                     new_password: confirmData.new_password
                 })
             });

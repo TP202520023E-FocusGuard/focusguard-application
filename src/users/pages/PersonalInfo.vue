@@ -15,8 +15,8 @@
           <v-card-text>
             <div class="info-group">
               <div class="info-label">Nombre completo</div>
-              <div class="info-value">{{ userName }}</div>
-            </div>
+              <div class="info-value">{{ userName }} {{ lastName }}</div>
+            </div> 
 
             <v-divider class="my-4"></v-divider>
 
@@ -48,7 +48,8 @@ import { useAuthStore } from "../../stores/authStore";
 const authStore = useAuthStore();
 
 const isUserLoaded = computed(() => Boolean(authStore.user));
-const userName = computed(() => authStore.user?.name || "—");
+const userName = computed(() => authStore.user?.firstName || "—");
+const lastName = computed(() => authStore.user?.lastName || "");
 const userEmail = computed(() => authStore.user?.email || "—");
 </script>
 

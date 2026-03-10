@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8080/api/v1'; // Tu FastAPI
+const API_BASE = 'http://localhost:8080/api/v1';
 
 async function handleResponse(response) {
     if (!response.ok) {

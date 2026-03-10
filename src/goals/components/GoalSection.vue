@@ -85,7 +85,6 @@ export default {
       currentGoal: '',
       savedGoal: '',
       goalId: null,
-      userId: 1,
       loading: false
     };
   },

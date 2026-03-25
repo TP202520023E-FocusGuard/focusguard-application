@@ -190,6 +190,58 @@ export const apiService = {
         }
     },
 
+    async getWeeklyGoalsByUser(userId) {
+        try {
+            const response = await fetch(`${API_BASE}/weekly-goals/user/${userId}`);
+            return await handleResponse(response);
+        } catch (error) {
+            console.error("Error al obtener objetivos semanales:", error.message);
+            return []; // devuelvo array vacío si falla
+        }
+    },
+
+    async createWeeklyGoal(goalData) {
+        try {
+            const response = await fetch(`${API_BASE}/weekly-goals/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(goalData)
+            });
+            return await handleResponse(response);
+        } catch (error) {
+            console.error("Error al crear objetivo semanal:", error.message);
+            throw error;
+        }
+    },
+
+    async updateWeeklyGoal(goalId, goalData) {
+        try {
+            const response = await fetch(`${API_BASE}/weekly-goals/${goalId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(goalData)
+            });
+            return await handleResponse(response);
+        } catch (error) {
+            console.error("Error al actualizar objetivo semanal:", error.message);
+            throw error;
+        }
+    },
+
+    async deleteWeeklyGoal(goalId) {
+        try {
+            const response = await fetch(`${API_BASE}/weekly-goals/${goalId}`, {
+                method: 'DELETE'
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            return true;
+        } catch (error) {
+            console.error("Error al eliminar objetivo semanal:", error.message);
+            throw error;
+        }
+    },
+
+
     async register(userData) {
         try {
             const response = await fetch(`${API_BASE}/users/`, {

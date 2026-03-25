@@ -96,7 +96,6 @@ export default {
       this.$emit("delete", this.objective.id);
     },
     onCardClick() {
-      // Envía el evento al padre para abrir el diálogo de edición
       this.$emit("click", this.objective);
     }
   }

@@ -286,7 +286,6 @@ export default {
       immediate: true,
       handler(newVal) {
         if (newVal && newVal.datos) {
-          // Cargar datos del objetivo a editar
           this.formData = {
             tipo: newVal.datos.tipo || 'menos',
             horas: newVal.datos.horas?.toString() || '0',

@@ -13,7 +13,7 @@
         </v-col>
       </v-row>
 
-      <!-- Middle Section - Two Cards -->
+      <!-- Middle Section -->
       <v-row class="mb-6">
         <v-col cols="12" md="6">
           <TopSitesCard />
@@ -23,7 +23,7 @@
         </v-col>
       </v-row>
 
-      <!-- Bottom Section - Leisure Content -->
+      <!-- Bottom Section -->
       <v-row>
         <v-col cols="12">
           <LeisureContentCard />

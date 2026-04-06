@@ -2,10 +2,10 @@ import { apiService } from '../../services/api/api';
 import { useAuthStore } from '../../stores/authStore';
 
 export const goalsService = {
-    async getGoal(userId) {
+    async getGoal() {
         try {
             const authStore = useAuthStore();
-            userId = authStore.user?.id;
+            const userId = authStore.user?.id;
             const goals = await apiService.getGoalsByUser(userId);
             return goals.length > 0 ? goals[0] : null;
         } catch (error) {
@@ -16,7 +16,10 @@ export const goalsService = {
 
     async saveGoal(goalData) {
         try {
-            const goals = await apiService.getGoalsByUser(goalData.id_usuarios);
+            const authStore = useAuthStore();
+            const userId = authStore.user?.id;
+
+            const goals = await apiService.getGoalsByUser(userId);
             const userGoal = goals.length > 0 ? goals[0] : null;
             
             if (userGoal) {

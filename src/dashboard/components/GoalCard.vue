@@ -23,31 +23,65 @@
       </div>
       
       <div class="goal-content">
-        <div class="goal-description">
-          {{ currentGoal }}
+        <!-- Loading -->
+        <div v-if="loading" class="goal-description">
+          Cargando...
         </div>
-        
-        <div class="goal-meta">
-          <div class="meta-item">
-            <v-icon size="14" color="#666" class="mr-1">mdi-calendar</v-icon>
-            <span class="meta-text">Establecida: {{ goalDate }}</span>
+
+        <!-- Contenido -->
+        <template v-else>
+          <div class="goal-description">
+            {{ currentGoal }}
           </div>
-          <div class="meta-item">
-            <v-icon size="14" color="#666" class="mr-1">mdi-update</v-icon>
-            <span class="meta-text">{{ daysActive }} días activa</span>
+          
+          <div class="goal-meta">
+            <div class="meta-item">
+              <v-icon size="14" color="#666" class="mr-1">mdi-calendar</v-icon>
+              <span class="meta-text">Establecida: {{ goalDate }}</span>
+            </div>
+            <div class="meta-item">
+              <v-icon size="14" color="#666" class="mr-1">mdi-update</v-icon>
+              <span class="meta-text">{{ daysActive }} días activa</span>
+            </div>
           </div>
-        </div>
+        </template>
       </div>
     </v-card-text>
   </v-card>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { goalsService } from '../../goals/services/GoalsService'
 
-const currentGoal = ref('Desarrollar una aplicación para combatir la procrastinación.')
-const goalDate = ref('15 Nov 2024')
-const daysActive = ref(12)
+const goal = ref(null)
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    goal.value = await goalsService.getGoal()
+  } catch (error) {
+    console.error('Error cargando meta:', error)
+  } finally {
+    loading.value = false
+  }
+})
+
+const currentGoal = computed(() => {
+  return goal.value?.texto || 'Sin meta definida'
+})
+
+const goalDate = computed(() => {
+  if (!goal.value?.createdAt) return '-'
+  return new Date(goal.value.createdAt).toLocaleDateString()
+})
+
+const daysActive = computed(() => {
+  if (!goal.value?.createdAt) return 0
+  const created = new Date(goal.value.createdAt)
+  const today = new Date()
+  return Math.floor((today - created) / (1000 * 60 * 60 * 24))
+})
 
 const editGoal = () => {
   console.log('Editar meta')

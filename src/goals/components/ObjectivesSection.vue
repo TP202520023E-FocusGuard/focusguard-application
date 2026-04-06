@@ -82,6 +82,7 @@
 import ObjectiveCard from './ObjectiveCard.vue';
 import NewObjectiveDialog from './ObjectiveDialog.vue';
 import { apiService } from '../../services/api/api';
+import { useAuthStore } from '../../stores/authStore';
 
 export default {
   name: "ObjectivesSection",
@@ -92,11 +93,13 @@ export default {
   emits: ['objectiveAdded', 'objectiveUpdated', 'objectiveDeleted'],
   data() {
     return {
-      objectives: [
-      ],
+      objectives: [],
       showNewObjectiveDialog: false,
       objectiveToEdit: null
     };
+  },
+  async mounted() {
+    await this.loadObjectives();
   },
   computed: {
     completedCount() {
@@ -107,68 +110,194 @@ export default {
     }
   },
   methods: {
-    // MÉTODO NUEVO: Abrir diálogo para editar objetivo
+    async loadObjectives() {
+      const authStore = useAuthStore();
+      const userId = authStore.user?.id;
+
+      if (!userId) return;
+
+      const subcategoriasSitio = {
+        1: 'Productivo',
+        2: 'Neutral',
+        3: 'Distractivo',
+        4: 'Sin Categoria',
+        5: 'Doble Filo',
+
+        productivo: 'Productivo',
+        neutral: 'Neutral',
+        distractivo: 'Distractivo',
+        doble_filo: 'Doble Filo'
+      };
+
+
+      const subcategoriasContenido = {
+        ocio: 'Ocio',
+        no_ocio: 'No Ocio',
+
+        1: 'Ocio',
+        2: 'No Ocio',
+      };
+
+
+      try {
+        const goals = await apiService.getWeeklyGoalsByUser(userId);
+        this.objectives = goals.map(goal => {
+          let subcategoriaText = '';
+
+          const minutos = goal.tiempo;
+
+          // Formatear tiempo
+          const horas = Math.floor(minutos / 60);
+          const mins = minutos % 60;
+
+          let textoTiempo = '';
+          if (horas > 0) textoTiempo += `${horas}h `;
+          if (mins > 0) textoTiempo += `${mins}min`;
+          if (!textoTiempo) textoTiempo = '0min';
+
+          // Signo según tipo
+          const signo = goal.opcion_1 === 1 ? '+' : '-';
+
+          const raw = goal.opcion_3;
+          const key = isNaN(raw)
+            ? raw.toLowerCase().trim()
+            : parseInt(raw);
+          
+          console.log(typeof goal.opcion_3, goal.opcion_3);
+
+          if (goal.opcion_2 === 1) {
+            subcategoriaText = subcategoriasSitio[key] || 'General';
+          } else if (goal.opcion_2 === 2) {
+            subcategoriaText = subcategoriasContenido[key] || 'General';
+          }
+
+          return {
+            id: goal.id,
+            //text: `${goal.opcion_1 === 1 ? 'Aumentar' : 'Reducir'} ${subcategoriaText}`, // texto de la card
+            text: `${signo} ${textoTiempo} en ${subcategoriaText}`, // texto de la card con tiempo formateado
+            completed: false,
+            tiempo: goal.tiempo,
+            opcion_1: goal.opcion_1,
+            opcion_2: goal.opcion_2,
+            opcion_3: goal.opcion_3, // mantener el ID para edición
+            fecha_limite: new Date(goal.fecha_limite),
+            datos: goal
+          };
+        });
+      } catch (error) {
+        console.error('Error al cargar objetivos:', error);
+      }
+    },
+
     openEditDialog(objective) {
       this.objectiveToEdit = objective;
       this.showNewObjectiveDialog = true;
     },
 
-    // MÉTODO NUEVO: Abrir diálogo para nuevo objetivo
     openNewObjectiveDialog() {
       this.objectiveToEdit = null;
       this.showNewObjectiveDialog = true;
     },
 
-    onGuardarObjetivo(objetivoData) {
-      if (objetivoData.id) {
-        // Modo edición
-        const index = this.objectives.findIndex(obj => obj.id === objetivoData.id);
-        if (index !== -1) {
-          this.objectives[index] = {
-            ...this.objectives[index],
-            text: objetivoData.texto,
-            datos: objetivoData
-          };
-          this.$emit('objectiveUpdated', { id: objetivoData.id, ...objetivoData });
+    async onGuardarObjetivo(objetivoData) {
+      const authStore = useAuthStore();
+      const userId = authStore.user?.id;
+      if (!userId) return;
+
+      // Convertir horas + minutos a tiempo en minutos
+      const tiempoTotal = (parseInt(objetivoData.horas) || 0) * 60 + (parseInt(objetivoData.minutos) || 0);
+
+      // Construimos el payload para el backend
+      const payload = {
+        id_usuarios: userId,
+        opcion_1: objetivoData.tipo === 'mas' ? 1 : 2, // Más = 1, Menos = 2
+        tiempo: tiempoTotal || 30,                    // default 30 min si no viene
+        opcion_2: objetivoData.categoriaPrincipal.value === 'categorizacion_sitio' ? 1 : 2,
+        opcion_3: objetivoData.subcategoria.value,    // Guardar el ID de subcategoría
+        fecha_limite: objetivoData.fecha_limite ? new Date(objetivoData.fecha_limite).toISOString() : new Date().toISOString()
+      };
+
+      try {
+        if (objetivoData.id) {
+          // Actualizar objetivo existente
+          const updated = await apiService.updateWeeklyGoal(objetivoData.id, payload);
+          const index = this.objectives.findIndex(obj => obj.id === updated.id);
+          if (index !== -1) {
+            let subcategoriaText = '';
+            if (updated.opcion_2 === 1) subcategoriaText = {1:'Productivo',2:'Neutral',3:'Distractor',4:'Sin Categoria',5:'Doble Filo'}[updated.opcion_3] || 'General';
+            if (updated.opcion_2 === 2) subcategoriaText = {1:'Ocio',2:'No Ocio'}[updated.opcion_3] || 'General';
+
+            this.objectives.splice(index, 1, {
+              id: updated.id,
+              text: `${updated.opcion_1 === 1 ? 'Aumentar' : 'Reducir'} ${subcategoriaText}`,
+              completed: false,
+              tiempo: updated.tiempo,
+              opcion_1: updated.opcion_1,
+              opcion_2: updated.opcion_2,
+              opcion_3: updated.opcion_3,
+              fecha_limite: new Date(updated.fecha_limite),
+              datos: updated
+            });
+            this.$emit('objectiveUpdated', { id: updated.id, text: `${updated.opcion_1 === 1 ? 'Aumentar' : 'Reducir'} ${subcategoriaText}` });
+          }
+        } else {
+          // Crear un nuevo objetivo
+          const created = await apiService.createWeeklyGoal(payload);
+          let subcategoriaText = '';
+          if (created.opcion_2 === 1) subcategoriaText = {1:'Productivo',2:'Neutral',3:'Distractor',4:'Sin Categoria',5:'Doble Filo'}[created.opcion_3] || 'General';
+          if (created.opcion_2 === 2) subcategoriaText = {1:'Ocio',2:'No Ocio'}[created.opcion_3] || 'General';
+
+          this.objectives.push({
+            id: created.id,
+            text: `${created.opcion_1 === 1 ? 'Aumentar' : 'Reducir'} ${subcategoriaText}`,
+            completed: false,
+            tiempo: created.tiempo,
+            opcion_1: created.opcion_1,
+            opcion_2: created.opcion_2,
+            opcion_3: created.opcion_3,
+            fecha_limite: new Date(created.fecha_limite),
+            datos: created
+          });
+          this.$emit('objectiveAdded', { id: created.id, text: `${created.opcion_1 === 1 ? 'Aumentar' : 'Reducir'} ${subcategoriaText}` });
         }
-      } else {
-        // Nuevo objetivo
-        const newObjective = {
-          id: Date.now(),
-          text: objetivoData.texto,
-          completed: false,
-          createdAt: new Date(),
-          datos: objetivoData
-        };
-        this.objectives.push(newObjective);
-        this.$emit('objectiveAdded', newObjective);
+
+        this.showNewObjectiveDialog = false; // cerrar el diálogo
+      } catch (error) {
+        console.error('Error al guardar objetivo:', error);
       }
-      
-      this.showNewObjectiveDialog = false;
-      this.objectiveToEdit = null;
     },
     
     onObjectiveStatusChange(change) {
       this.$emit('objectiveUpdated', change);
     },
     
-    onDeleteObjective(objectiveId) {
-      this.objectives = this.objectives.filter(obj => obj.id !== objectiveId);
-      this.$emit('objectiveDeleted', objectiveId);
+    async onDeleteObjective(objectiveId) {
+      try {
+        // Llamamos a la API
+        await apiService.deleteWeeklyGoal(objectiveId);
+
+        // Eliminamos localmente
+        this.objectives = this.objectives.filter(obj => obj.id !== objectiveId);
+
+        // Emitimos evento externo si alguien lo escucha
+        this.$emit('objectiveDeleted', objectiveId);
+
+      } catch (error) {
+        console.error('Error eliminando objetivo:', error);
+        alert('No se pudo eliminar el objetivo');
+      }
     }
   }
 };
 </script>
 
 <style scoped>
-/* (Mantén todos los estilos que ya tienes) */
-/* CONTENEDOR PRINCIPAL */
+
 .objectives-container {
   position: relative;
   height: 100%;
 }
 
-/* ESTILOS DEL CARD PRINCIPAL */
 .objectives-section {
   border-radius: 12px;
   background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);

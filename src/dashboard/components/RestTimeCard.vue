@@ -59,33 +59,32 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { apiService } from '../../services/api/api.js';
+import { useAuthStore } from '../../stores/authStore.js';
 
-// ⏰ DATOS DINÁMICOS - Puedes cambiar estos valores
-const timeUsed = ref(30) // minutos usados
-const totalTime = ref(120) // minutos totales
+const authStore = useAuthStore()
+const timeUsed = ref(0) // minutos usados
+const totalTime = ref(0) // minutos totales
 
-// 🎨 CÁLCULOS DINÁMICOS
 const timeRemaining = computed(() => totalTime.value - timeUsed.value)
 
 const progressPercentage = computed(() => {
   return (timeRemaining.value / totalTime.value) * 100
 })
 
-const circumference = computed(() => 2 * Math.PI * 38) // 238.76 aproximadamente
+const circumference = computed(() => 2 * Math.PI * 38)
 
 const strokeDashoffset = computed(() => {
   return circumference.value - (progressPercentage.value / 100) * circumference.value
 })
 
-// 🎯 COLOR QUE CAMBIA SEGÚN EL TIEMPO
 const circleColor = computed(() => {
-  if (progressPercentage.value >= 50) return '#4CAF50' // Verde - mucho tiempo
+  if (progressPercentage.value >= 50) return '#4CAF50' // Verde - tiempo suficiente
   if (progressPercentage.value >= 25) return '#FF9800' // Naranja - tiempo medio
   return '#F44336' // Rojo - poco tiempo
 })
 
-// 📝 Formatear tiempo
 const formatTime = (minutes) => {
   if (minutes >= 60) {
     const hours = Math.floor(minutes / 60)
@@ -95,11 +94,21 @@ const formatTime = (minutes) => {
   return `${minutes}m`
 }
 
-// 🔄 Método para actualizar desde fuera
-const updateRestTime = (usedMinutes, totalMinutes = 60) => {
-  timeUsed.value = usedMinutes
-  totalTime.value = totalMinutes
+const loadRestTime = async () => {
+  try {
+    const userId = authStore.user?.id
+    const data = await apiService.getLeisureTimeByUser(userId)
+    totalTime.value = data?.tiempo_total ?? 60
+  } catch (error) {
+    console.error("Error cargando tiempo de descanso:", error)
+    totalTime.value = 60
+  }
 }
+
+onMounted(() => {
+  loadRestTime()
+})
+
 </script>
 
 <style scoped>

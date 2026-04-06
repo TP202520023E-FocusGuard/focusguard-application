@@ -171,17 +171,18 @@ export default {
     async loadConfiguration() {
       try {
         const authStore = useAuthStore();
-        const userId = authStore.user?.id
+        const userId = authStore.user?.id;
+
         this.loading = true;
-        const config = await apiService.getTimeConfiguration(userId); // userId = 1 por ahora
-        
-        this.userConfig = config;
-        this.leisureTime = config.tiempo_ocio_diario || 30;
+
+        const tiempoDescanso = await apiService.getLeisureTimeByUser(userId);
+
+        this.userConfig = tiempoDescanso;
+        this.leisureTime = tiempoDescanso?.tiempo_total ?? 30;
         this.originalLeisureTime = this.leisureTime;
-     
+
       } catch (error) {
-        console.error('❌ Error cargando configuración:', error);
-        // Valores por defecto si hay error
+        console.error('❌ Error cargando tiempo de descanso:', error);
         this.leisureTime = 30;
         this.originalLeisureTime = 30;
       } finally {
@@ -206,21 +207,20 @@ export default {
 
       this.saving = true;
       this.showSuccess = false;
-      
+
       try {
-        const configData = {
-          tiempo_ocio_diario: this.leisureTime,
-          tiempo_max_productivo: this.userConfig?.tiempo_max_productivo || 0,
-          idioma: this.userConfig?.idioma || 'es',
-          bloqueo_automatico: this.userConfig?.bloqueo_automatico || true
-        };
         const authStore = useAuthStore();
         const userId = authStore.user?.id;
-        const response = await apiService.updateTimeConfiguration(configData, userId);
-        
+
+        // Solo enviamos tiempo_total
+        const payload = {
+          tiempo_total: this.leisureTime
+        };
+
+        await apiService.updateLeisureTime(userId, payload);
+
         this.originalLeisureTime = this.leisureTime;
         this.showSuccess = true;
-        
         this.$emit('saved', this.leisureTime);
 
         setTimeout(() => {
@@ -228,7 +228,7 @@ export default {
         }, 3000);
 
       } catch (error) {
-        console.error('❌ Error guardando configuración:', error);
+        console.error('❌ Error guardando tiempo de descanso:', error);
         this.$emit('error', error.message);
       } finally {
         this.saving = false;

@@ -321,6 +321,30 @@ export const apiService = {
             console.error("Error al obtener usuario:", error.message);
             throw error;
         }
+    },
+
+    async getLeisureTimeByUser(userId) {
+        try {
+            const response = await fetch(`${API_BASE}/rest-time/${userId}`);
+            return await handleResponse(response);
+        } catch (error) {
+            console.error("Error al obtener tiempo de ocio:", error.message);
+            throw error;
+        }
+    },
+
+    async updateLeisureTime(userId, leisureTimeData) {
+        try {
+            const response = await fetch(`${API_BASE}/rest-time/${userId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(leisureTimeData)
+            });
+            return await handleResponse(response);
+        } catch (error) {
+            console.error("Error al actualizar tiempo de ocio:", error.message);
+            throw error;
+        }
     }
 
 };

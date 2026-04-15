@@ -3,7 +3,7 @@
     {
       "id": 1,
       "name": "stackoverflow.com",
-      "category": "Distractor"
+      "category": "Productivo"
     },
     {
       "id": 2,
@@ -18,7 +18,7 @@
     {
       "id": 4,
       "name": "unknownsite.com",
-      "category": "Doble Filo"
+      "category": "Distractor"
     },
     {
       "id": 5,
@@ -33,12 +33,12 @@
     {
       "id": 7,
       "name": "github.com",
-      "category": "Productivo"
+      "category": "Neutral"
     },
     {
       "id": 8,
       "name": "linkedin.com",
-      "category": "Neutral"
+      "category": "Productivo"
     },
     {
       "id": 9,
@@ -80,12 +80,12 @@
     {
       "id": 1,
       "name": "Gaming",
-      "isProcrastination": false
+      "isProcrastination": true
     },
     {
       "id": 2,
       "name": "Streaming",
-      "isProcrastination": false
+      "isProcrastination": true
     },
     {
       "id": 3,
@@ -95,7 +95,7 @@
     {
       "id": 4,
       "name": "Deportes",
-      "isProcrastination": false
+      "isProcrastination": true
     },
     {
       "id": 5,
@@ -105,7 +105,7 @@
     {
       "id": 6,
       "name": "Fitness",
-      "isProcrastination": false
+      "isProcrastination": true
     },
     {
       "id": 7,

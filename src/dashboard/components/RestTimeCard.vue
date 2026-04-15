@@ -63,6 +63,7 @@ import { ref, computed, onMounted } from 'vue'
 import { apiService } from '../../services/api/api.js';
 import { useAuthStore } from '../../stores/authStore.js';
 
+const EXTENSION_ID = "bbojhbamnnececlfenffckgabakbdfop";
 const authStore = useAuthStore()
 const timeUsed = ref(0) // minutos usados
 const totalTime = ref(0) // minutos totales
@@ -99,6 +100,26 @@ const loadRestTime = async () => {
     const userId = authStore.user?.id
     const data = await apiService.getLeisureTimeByUser(userId)
     totalTime.value = data?.tiempo_total ?? 60
+
+    // SOLICITAR DATOS A LA EXTENSIÓN
+    // Verificamos si se tiene instalada la extensión y si está configurada su comunicación en el manifest
+    if (typeof chrome !== "undefined" && chrome.runtime) {
+
+      chrome.runtime.sendMessage(EXTENSION_ID, { action: "GET_CONSUMED_TIME" }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.warn("La extensión no está instalada o no es accesible.");
+          return;
+        }
+
+        if (response && response.status === "success") {
+          timeUsed.value = response.timeUsed;
+          console.log("Datos sincronizados con la extensión", response);
+        }
+        else console.log("Sincronización falla:", response);
+      });
+
+    } console.warn("La extensión no está instalada o no se tiene configurado el puente de comunicación.");
+
   } catch (error) {
     console.error("Error cargando tiempo de descanso:", error)
     totalTime.value = 60

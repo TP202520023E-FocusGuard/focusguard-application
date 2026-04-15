@@ -118,7 +118,7 @@ const loadRestTime = async () => {
         else console.log("Sincronización falla:", response);
       });
 
-    } console.warn("La extensión no está instalada o no se tiene configurado el puente de comunicación.");
+    } else console.warn("La extensión no está instalada o no se tiene configurado el puente de comunicación.");
 
   } catch (error) {
     console.error("Error cargando tiempo de descanso:", error)

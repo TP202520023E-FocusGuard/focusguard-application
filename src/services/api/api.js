@@ -1,4 +1,8 @@
+// FABRICIO
 const API_BASE = 'http://localhost:8080/api/v1';
+
+// RAFAEL
+// const API_BASE = 'http://127.0.0.1:8000/api/v1';
 
 async function handleResponse(response) {
     if (!response.ok) {
@@ -24,7 +28,7 @@ export const apiService = {
             throw error;
         }
     },
-
+/*
     async getUserById(userId) {
         try {
             const response = await fetch(`${API_BASE}/users/${userId}`);
@@ -34,7 +38,7 @@ export const apiService = {
             throw error;
         }
     },
-
+*/
     async getSites(userId) {
         try {
             if (!userId) {

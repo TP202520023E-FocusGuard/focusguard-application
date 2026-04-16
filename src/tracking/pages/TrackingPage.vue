@@ -54,11 +54,34 @@ export default {
       }
     },
 
+    sendDataToExtension(){
+      // ENVIAR DATOS A LA EXTENSIÓN
+      const EXTENSION_ID = "bbojhbamnnececlfenffckgabakbdfop";
+
+      if (typeof chrome !== "undefined" && chrome.runtime) {
+
+        chrome.runtime.sendMessage(EXTENSION_ID, { action: "web-category-updated" }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.warn("La extensión no está instalada o no es accesible.");
+            return;
+          }
+
+          if (response && response.status === "success")
+            console.log("Categoría web actualizada en la extensión", response);
+          else
+            console.log("Sincronización de categoría web falla:", response.message);
+        });
+
+      } else console.warn("La extensión no está instalada o no se tiene configurado el puente de comunicación.");
+    },
+
     async handleClassificationUpdate(site, newClassification) {
       try {
         if (site.classification === newClassification) return;
 
         await siteService.updateSiteClassification(site.rawData.id, newClassification);
+
+        this.sendDataToExtension();
         
         // Actualizar UI localmente
         site.classification = newClassification;

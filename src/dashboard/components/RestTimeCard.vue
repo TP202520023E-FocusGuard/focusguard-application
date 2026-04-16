@@ -70,6 +70,7 @@ const totalTime = ref(0) // minutos totales
 const timeRemaining = computed(() => totalTime.value - timeUsed.value)
 
 const progressPercentage = computed(() => {
+  if (!totalTime.value) return 0
   return (timeRemaining.value / totalTime.value) * 100
 })
 
@@ -98,10 +99,12 @@ const loadRestTime = async () => {
   try {
     const userId = authStore.user?.id
     const data = await apiService.getLeisureTimeByUser(userId)
-    totalTime.value = data?.tiempo_total ?? 60
+    timeUsed.value = Number(data?.tiempo_usado ?? 0)
+    totalTime.value = Number(data?.tiempo_total ?? 60)
   } catch (error) {
     console.error("Error cargando tiempo de descanso:", error)
     totalTime.value = 60
+    timeUsed.value = 0
   }
 }
 

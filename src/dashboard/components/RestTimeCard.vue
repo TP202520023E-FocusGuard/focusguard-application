@@ -63,7 +63,6 @@ import { ref, computed, onMounted } from 'vue'
 import { apiService } from '../../services/api/api.js';
 import { useAuthStore } from '../../stores/authStore.js';
 
-const EXTENSION_ID = "bbojhbamnnececlfenffckgabakbdfop";
 const authStore = useAuthStore()
 const timeUsed = ref(0) // minutos usados
 const totalTime = ref(0) // minutos totales
@@ -97,6 +96,7 @@ const formatTime = (minutes) => {
 
 const loadRestTime = async () => {
   try {
+    const EXTENSION_ID = "bbojhbamnnececlfenffckgabakbdfop";
     const userId = authStore.user?.id
     const data = await apiService.getLeisureTimeByUser(userId)
     totalTime.value = data?.tiempo_total ?? 60

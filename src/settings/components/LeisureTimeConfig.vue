@@ -159,8 +159,7 @@ export default {
       loading: true,
       showSuccess: false,
       timePresets: [15, 30, 45, 60, 90, 120],
-      userConfig: null,
-      EXTENSION_ID: "bbojhbamnnececlfenffckgabakbdfop"
+      userConfig: null
     };
   },
   computed: {
@@ -205,9 +204,12 @@ export default {
 
     sendDataToExtension(){
       // ENVIAR DATOS A LA EXTENSIÓN
+
+      const EXTENSION_ID = "bbojhbamnnececlfenffckgabakbdfop";
+
       if (typeof chrome !== "undefined" && chrome.runtime) {
 
-        chrome.runtime.sendMessage(this.EXTENSION_ID, { action: "update-rest-time", newRestTime: this.leisureTime }, (response) => {
+        chrome.runtime.sendMessage(EXTENSION_ID, { action: "update-rest-time", newRestTime: this.leisureTime }, (response) => {
           if (chrome.runtime.lastError) {
             console.warn("La extensión no está instalada o no es accesible.");
             return;

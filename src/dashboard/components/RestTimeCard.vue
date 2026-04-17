@@ -70,6 +70,7 @@ const totalTime = ref(0) // minutos totales
 const timeRemaining = computed(() => totalTime.value - timeUsed.value)
 
 const progressPercentage = computed(() => {
+  if (!totalTime.value) return 0
   return (timeRemaining.value / totalTime.value) * 100
 })
 
@@ -99,7 +100,8 @@ const loadRestTime = async () => {
     const EXTENSION_ID = "bbojhbamnnececlfenffckgabakbdfop";
     const userId = authStore.user?.id
     const data = await apiService.getLeisureTimeByUser(userId)
-    totalTime.value = data?.tiempo_total ?? 60
+    timeUsed.value = Number(data?.tiempo_usado ?? 0)
+    totalTime.value = Number(data?.tiempo_total ?? 60)
 
     // SOLICITAR DATOS A LA EXTENSIÓN
     // Verificamos si se tiene instalada la extensión y si está configurada su comunicación en el manifest
@@ -123,6 +125,7 @@ const loadRestTime = async () => {
   } catch (error) {
     console.error("Error cargando tiempo de descanso:", error)
     totalTime.value = 60
+    timeUsed.value = 0
   }
 }
 

@@ -349,6 +349,16 @@ export const apiService = {
             console.error("Error al actualizar tiempo de ocio:", error.message);
             throw error;
         }
+    },
+
+    async getTopSitesByUser(userId) {
+        try {
+            const response = await fetch(`${API_BASE}/reports/top-sites/?user_id=${userId}`);
+            return await handleResponse(response);
+        } catch (error) {
+            console.error("Error al obtener sitios más visitados:", error.message);
+            throw error;
+        }
     }
 
 };

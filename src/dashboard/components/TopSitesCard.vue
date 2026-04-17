@@ -6,6 +6,8 @@
     hover
   >
     <v-card-text class="pa-3">
+      
+      <!-- Header -->
       <div class="card-header">
         <div class="header-content">
           <v-icon color="#9C27B0" size="20" class="header-icon">mdi-web</v-icon>
@@ -18,8 +20,19 @@
           </div>
         </div>
       </div>
-      
-      <div class="sites-list">
+
+      <!-- Loading -->
+      <div v-if="loading" class="text-center py-4">
+        <v-progress-circular indeterminate color="primary" />
+      </div>
+
+      <!-- Empty -->
+      <div v-else-if="topSites.length === 0" class="text-center py-4">
+        <span class="text-grey">No hay datos disponibles</span>
+      </div>
+
+      <!-- List -->
+      <div v-else class="sites-list">
         <div 
           v-for="(site, index) in topSites" 
           :key="site.id"
@@ -44,7 +57,7 @@
               </div>
               <div class="stat">
                 <span class="stat-value">{{ site.time }}</span>
-                <span class="stat-label">horas</span>
+                <span class="stat-label">tiempo</span>
               </div>
             </div>
           </div>
@@ -59,18 +72,42 @@
           </div>
         </div>
       </div>
+
     </v-card-text>
   </v-card>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { topSiteService } from '../services/TopSiteService'
 
-const topSites = ref([
-  { id: 1, name: 'youtube.com', visits: 45, time: 12.5, trend: 'up' },
-  { id: 2, name: 'adam/tsui.upc.edu.pv', visits: 32, time: 8.2, trend: 'down' },
-  { id: 3, name: 'estudante.upc.edu.pv', visits: 28, time: 6.8, trend: 'up' }
-])
+const topSites = ref([])
+const loading = ref(false)
+
+const fetchTopSites = async () => {
+  loading.value = true
+  try {
+    const data = await topSiteService.getTopSites()
+
+    topSites.value = (data || []).slice(0, 5).map((site) => ({
+      id: site.name,
+      name: site.name,
+      visits: site.visits,
+      time: site.time_minutes < 60
+        ? `${site.time_minutes.toFixed(1)} min`
+        : `${site.time_hours.toFixed(2)} h`,
+      trend: 'up' // luego puedes hacerlo dinámico
+    }))
+
+  } catch (error) {
+    console.error("Error cargando top sites:", error)
+    topSites.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchTopSites)
 
 const totalVisits = computed(() => {
   return topSites.value.reduce((total, site) => total + site.visits, 0)

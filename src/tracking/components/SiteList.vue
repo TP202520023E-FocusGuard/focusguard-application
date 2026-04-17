@@ -170,7 +170,7 @@ export default {
         "Productivo",
         "Neutral",
         "Doble Filo",
-        "Distractor"
+        "Distractivo"
       ],
       headers: [
         { title: "Dominio", value: "name", width: "60%" },
@@ -181,7 +181,7 @@ export default {
         { title: "Productivo", value: "Productivo" },
         { title: "Neutral", value: "Neutral" },
         { title: "Doble Filo", value: "Doble Filo" },
-        { title: "Distractor", value: "Distractor" }
+        { title: "Distractivo", value: "Distractivo" }
       ],
       domainPatterns: {
         // Redes Sociales
@@ -302,7 +302,7 @@ export default {
         "Productivo": "success",
         "Neutral": "grey",
         "Doble Filo": "warning",
-        "Distractor": "error",
+        "Distractivo": "error",
         "Sin Categoría": "blue-grey"
       };
       return colors[classification] || "primary";
@@ -313,7 +313,7 @@ export default {
         "Productivo": "mdi-check-circle",
         "Neutral": "mdi-minus-circle",
         "Doble Filo": "mdi-alert-circle",
-        "Distractor": "mdi-close-circle",
+        "Distractivo": "mdi-close-circle",
         "Sin Categoría": "mdi-help-circle"
       };
       return icons[classification] || "mdi-help-circle";
@@ -326,7 +326,7 @@ export default {
         "Productivo": "mdi-check-circle",
         "Neutral": "mdi-minus-circle",
         "Doble Filo": "mdi-alert-circle",
-        "Distractor": "mdi-close-circle"
+        "Distractivo": "mdi-close-circle"
       };
       return icons[classification] || "mdi-circle";
     }

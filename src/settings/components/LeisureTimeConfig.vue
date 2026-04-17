@@ -1,266 +1,185 @@
 <template>
-  <v-card class="compact-settings-card pa-4" elevation="2">
-    <!-- Header compacto -->
-    <div class="text-center mb-4">
-      <v-icon color="primary" size="48" class="mb-1">mdi-timer-sand</v-icon>
-      <h2 class="text-h5 font-weight-bold primary--text mb-1">
-        Tiempo de Ocio Diario
+  <v-card class="premium-card pa-5" elevation="0">
+
+    <!-- Header emocional -->
+    <div class="text-center mb-5">
+      <v-icon :color="currentColor" size="44" class="mb-2">
+        mdi-brain
+      </v-icon>
+
+      <h2 class="text-h5 font-weight-bold mb-1">
+        {{ titleText }}
       </h2>
+
       <p class="text-caption text--secondary">
-        Establece tu límite de tiempo para actividades de ocio
+        {{ subtitleText }}
       </p>
     </div>
 
-    <!-- Loading state-->
-    <div v-if="loading" class="text-center py-4">
-      <v-progress-circular
-        indeterminate
-        color="primary"
-        size="36"
-      ></v-progress-circular>
-      <div class="text-caption text--secondary mt-2">Cargando configuración...</div>
-    </div>
-
-    <!-- Display del tiempo actual -->
-    <v-card variant="outlined" class="pa-3 mb-3 text-center">
-      <div class="time-display-compact">
-        <span class="text-h4 font-weight-bold primary--text">{{ leisureTime }}</span>
-        <div class="text-caption text--secondary">minutos</div>
-      </div>
-    </v-card>
-
-    <!-- Slider compacto -->
-    <div class="mb-4">
-      <div class="d-flex justify-space-between align-center mb-1">
-        <span class="text-body-2 font-weight-medium">Ajustar tiempo:</span>
-        <span class="text-body-2 primary--text font-weight-medium">{{ leisureTime }} min</span>
-      </div>
-      <v-slider
-        v-model="leisureTime"
-        :min="15"
-        :max="180"
-        :step="15"
-        color="primary"
-        thumb-color="primary"
-        track-color="grey lighten-2"
-        hide-details
-        density="compact"
-      >
-        <template #thumb-label>
-          {{ leisureTime }}
-        </template>
-      </v-slider>
-      <div class="d-flex justify-space-between mt-1">
-        <small class="text-caption text--secondary">15 min</small>
-        <small class="text-caption text--secondary">3 hrs</small>
+    <!-- Círculo principal -->
+    <div class="circle-container mb-6">
+      <div class="circle" :style="{ borderColor: currentColor }">
+        <div class="circle-inner">
+          <span class="time">{{ leisureTime }}</span>
+          <span class="label">min</span>
+        </div>
       </div>
     </div>
 
-    <!-- Controles rápidos -->
-    <div class="d-flex justify-center align-center mb-4">
-      <v-btn 
-        icon 
-        @click="decrementTime"
-        :disabled="leisureTime <= 15"
-        color="primary"
-        size="small"
-        variant="outlined"
+    <!-- Slider elegante -->
+    <v-slider
+      v-model="leisureTime"
+      :min="15"
+      :max="180"
+      :step="15"
+      :color="currentColor"
+      thumb-label
+      class="mb-4"
+    />
+
+    <!-- Presets tipo pills -->
+    <div class="d-flex justify-center gap-2 mb-5">
+      <v-chip
+        v-for="preset in timePresets"
+        :key="preset.value"
+        @click="leisureTime = preset.value"
+        :style="chipStyle(preset.value)"
+        class="preset-pill"
       >
-        <v-icon>mdi-minus</v-icon>
-      </v-btn>
-      
-      <div class="mx-3 text-center">
-        <v-chip color="primary" text-color="white" class="font-weight-bold">
-          {{ leisureTime }} min
-        </v-chip>
-      </div>
-      
-      <v-btn 
-        icon 
-        @click="incrementTime"
-        :disabled="leisureTime >= 180"
-        color="primary"
-        size="small"
-        variant="outlined"
-      >
-        <v-icon>mdi-plus</v-icon>
-      </v-btn>
+        {{ preset.label }}
+      </v-chip>
     </div>
 
-    <!-- Presets compactos -->
-    <div class="presets-compact mb-3">
-      <span class="text-body-2 font-weight-medium d-block mb-2 text-center">Presets:</span>
-      <div class="d-flex flex-wrap gap-1 justify-center">
-        <v-chip
-          v-for="preset in timePresets"
-          :key="preset"
-          :color="leisureTime === preset ? 'primary' : 'grey lighten-3'"
-          :text-color="leisureTime === preset ? 'white' : 'grey darken-2'"
-          @click="leisureTime = preset"
-          class="preset-chip-compact"
-          size="small"
-          density="comfortable"
-        >
-          {{ preset }}
-        </v-chip>
-      </div>
+    <!-- Insight dinámico -->
+    <div class="insight-box mb-5" :style="{ background: currentBg }">
+      <span>{{ insightText }}</span>
     </div>
 
-    <!-- Información compacta -->
-    <v-alert type="info" variant="tonal" density="compact" class="mt-3">
-      <template #prepend>
-        <v-icon color="info" size="small">mdi-information</v-icon>
-      </template>
-      <div class="text-caption">
-        <strong>Recomendado:</strong> 30-60 min para equilibrio
-      </div>
-    </v-alert>
-
-    <!-- Botón compacto -->
-    <v-card-actions class="justify-center mt-4 pa-0">
-      <v-btn 
-        color="primary" 
-        size="large"
-        @click="saveSettings"
-        :loading="saving"
-        min-width="140"
-      >
-        <v-icon left size="small">mdi-content-save</v-icon>
-        {{ hasChanges ? 'Guardar Cambios' : 'Guardado' }}
-      </v-btn>
-    </v-card-actions>
-
-    <!-- Mensaje de exito-->
-    <v-alert
-      v-if="showSuccess"
-      type="success"
-      variant="tonal"
-      density="compact"
-      class="mt-3"
+    <!-- Botón -->
+    <v-btn
+      v-if="hasChanges"
+      block
+      size="large"
+      class="save-btn"
+      :style="{ background: currentColor }"
+      @click="saveSettings"
+      :loading="saving"
     >
-      <div class="text-caption">
-        Configuración guardada con éxito.
-      </div>
-    </v-alert> 
+      Guardar decisión
+    </v-btn>
+
+    <!-- Snackbar -->
+    <v-snackbar v-model="showSuccess" timeout="2500">
+      Guardado correctamente
+    </v-snackbar>
+
   </v-card>
 </template>
 
 <script>
-
 import { apiService } from '../../services/api/api.js';
 import { useAuthStore } from '../../stores/authStore.js';
+
 export default {
-  name: 'LeisureTimeConfig',
   data() {
     return {
       leisureTime: 30,
       originalLeisureTime: 30,
       saving: false,
-      loading: true,
       showSuccess: false,
-      timePresets: [15, 30, 45, 60, 90, 120],
-      userConfig: null
+      loading: true,
+
+      timePresets: [
+        { value: 15, label: "🔥 Enfoque" },
+        { value: 30, label: "⚖️ Balance" },
+        { value: 60, label: "😌 Chill" }
+      ]
     };
   },
+
   computed: {
     hasChanges() {
       return this.leisureTime !== this.originalLeisureTime;
+    },
+
+    currentColor() {
+      if (this.leisureTime <= 30) return "#4CAF50";
+      if (this.leisureTime <= 60) return "#FF9800";
+      return "#F44336";
+    },
+
+    currentBg() {
+      if (this.leisureTime <= 30) return "#E8F5E9";
+      if (this.leisureTime <= 60) return "#FFF3E0";
+      return "#FFEBEE";
+    },
+
+    titleText() {
+      if (this.leisureTime <= 30) return "Modo disciplinado";
+      if (this.leisureTime <= 60) return "Buen equilibrio";
+      return "Cuidado con el exceso";
+    },
+
+    subtitleText() {
+      return "Tu relación con el ocio define tu progreso";
+    },
+
+    insightText() {
+      if (this.leisureTime <= 30)
+        return "Estás priorizando tus objetivos 🚀";
+      if (this.leisureTime <= 60)
+        return "Mantienes un balance saludable 👍";
+      return "Podrías estar perdiendo foco ⚠️";
     }
   },
+
   methods: {
+    chipStyle(value) {
+      return {
+        background:
+          this.leisureTime === value ? this.currentColor : "#eee",
+        color: this.leisureTime === value ? "#fff" : "#555"
+      };
+    },
+
     async loadConfiguration() {
       try {
         const authStore = useAuthStore();
         const userId = authStore.user?.id;
 
-        this.loading = true;
+        const res = await apiService.getLeisureTimeByUser(userId);
 
-        const tiempoDescanso = await apiService.getLeisureTimeByUser(userId);
-
-        this.userConfig = tiempoDescanso;
-        this.leisureTime = tiempoDescanso?.tiempo_total ?? 30;
+        this.leisureTime = res?.tiempo_total ?? 30;
         this.originalLeisureTime = this.leisureTime;
-
-      } catch (error) {
-        console.error('❌ Error cargando tiempo de descanso:', error);
+      } catch {
         this.leisureTime = 30;
-        this.originalLeisureTime = 30;
       } finally {
         this.loading = false;
       }
-    },
-
-    incrementTime() {
-      if (this.leisureTime < 180) {
-        this.leisureTime += 15;
-      }
-    },
-
-    decrementTime() {
-      if (this.leisureTime > 15) {
-        this.leisureTime -= 15;
-      }
-    },
-
-    sendDataToExtension(){
-      // ENVIAR DATOS A LA EXTENSIÓN
-
-      const EXTENSION_ID = "bbojhbamnnececlfenffckgabakbdfop";
-
-      if (typeof chrome !== "undefined" && chrome.runtime) {
-
-        chrome.runtime.sendMessage(EXTENSION_ID, { action: "update-rest-time", newRestTime: this.leisureTime }, (response) => {
-          if (chrome.runtime.lastError) {
-            console.warn("La extensión no está instalada o no es accesible.");
-            return;
-          }
-
-          if (response && response.status === "success")
-            console.log("Tiempo actualizado en la extensión", response);
-          else
-            console.log("Sincronización falla:", response.message);
-        });
-
-      } else console.warn("La extensión no está instalada o no se tiene configurado el puente de comunicación.");
     },
 
     async saveSettings() {
       if (!this.hasChanges) return;
 
       this.saving = true;
-      this.showSuccess = false;
 
       try {
         const authStore = useAuthStore();
         const userId = authStore.user?.id;
 
-        // Solo enviamos tiempo_total
-        const payload = {
+        await apiService.updateLeisureTime(userId, {
           tiempo_total: this.leisureTime
-        };
-
-
-        this.sendDataToExtension();
-
-
-        await apiService.updateLeisureTime(userId, payload);
+        });
 
         this.originalLeisureTime = this.leisureTime;
         this.showSuccess = true;
-        this.$emit('saved', this.leisureTime);
 
-        setTimeout(() => {
-          this.showSuccess = false;
-        }, 3000);
-
-      } catch (error) {
-        console.error('❌ Error guardando tiempo de descanso:', error);
-        this.$emit('error', error.message);
       } finally {
         this.saving = false;
       }
     }
   },
+
   mounted() {
     this.loadConfiguration();
   }
@@ -268,51 +187,72 @@ export default {
 </script>
 
 <style scoped>
-.compact-settings-card {
-  border-radius: 12px;
-  max-width: 400px;
-  margin: 0 auto;
+.premium-card {
+  max-width: 420px;
+  margin: auto;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #ffffff, #f5f5f5);
 }
 
-.time-display-compact {
-  padding: 8px 0;
-}
-
-.presets-compact {
-  max-width: 100%;
-}
-
-.preset-chip-compact {
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: 500;
-  min-width: 40px;
+/* Círculo */
+.circle-container {
+  display: flex;
   justify-content: center;
 }
 
-.preset-chip-compact:hover {
-  transform: scale(1.05);
+.circle {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 6px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
 }
 
-.gap-1 {
-  gap: 4px;
+.circle-inner {
+  text-align: center;
 }
 
-/* Asegurar que ocupe solo el espacio necesario */
-.compact-settings-card {
-  width: 100%;
-  max-width: 400px;
+.time {
+  font-size: 36px;
+  font-weight: bold;
 }
 
-/* Responsive para móviles */
-@media (max-width: 600px) {
-  .compact-settings-card {
-    padding: 16px !important;
-    max-width: 100%;
-  }
-  
-  .time-display-compact {
-    padding: 4px 0;
-  }
+.label {
+  font-size: 14px;
+  color: #777;
+}
+
+/* Chips */
+.preset-pill {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preset-pill:hover {
+  transform: scale(1.08);
+}
+
+/* Insight */
+.insight-box {
+  padding: 12px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 13px;
+}
+
+/* Botón */
+.save-btn {
+  color: white;
+  border-radius: 12px;
+  font-weight: bold;
+  text-transform: none;
+}
+
+/* Animaciones suaves */
+.v-slider {
+  transition: all 0.3s ease;
 }
 </style>

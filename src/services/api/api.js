@@ -138,16 +138,17 @@ export const apiService = {
         }
     },
 
-    async getGoalsByUser(userId){
+    async getGoalsProgressByUser(userId){
         try {
-            const response = await fetch(`${API_BASE}/goals/user/${userId}`);
-            return await handleResponse(response);
+            const response = await fetch(`${API_BASE}/weekly-goals/progress/user/${userId}`);
+            const data = await handleResponse(response);
+            return data.data; // Retorna el array de objetivos con progreso
         } catch (error) {
-            console.error("Error al obtener metas:", error.message);
+            console.error("Error al obtener progreso de metas:", error.message);
             throw error;
         }
     },
-
+    
     async createGoal(goalData){
         try {
             const response = await fetch(`${API_BASE}/goals/`, {
@@ -359,6 +360,24 @@ export const apiService = {
             console.error("Error al obtener sitios más visitados:", error.message);
             throw error;
         }
-    }
+    },
 
+    async getWeeklyLeisureHoursByUser(userId, startDate = null, endDate = null) {
+        try {
+
+            let url = `${API_BASE}/reports/weekly-leisure-hours/?user_id=${userId}`;
+
+            if (startDate && endDate) {
+                url += `&start_date=${startDate}&end_date=${endDate}`;
+            }
+
+            const response = await fetch(url);
+
+            return await handleResponse(response);
+
+        } catch (error) {
+            console.error("Error al obtener el tiempo de ocio: ", error.message);
+            throw error;
+        }
+    }
 };

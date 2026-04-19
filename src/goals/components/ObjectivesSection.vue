@@ -103,10 +103,10 @@ export default {
   },
   computed: {
     completedCount() {
-      return this.objectives.filter(obj => obj.completed).length;
+      return this.objectives.filter(obj => obj.completado).length;
     },
     pendingCount() {
-      return this.objectives.filter(obj => !obj.completed).length;
+      return this.objectives.filter(obj => !obj.completado).length;
     }
   },
   methods: {
@@ -122,31 +122,26 @@ export default {
         3: 'Distractivo',
         4: 'Sin Categoria',
         5: 'Doble Filo',
-
         productivo: 'Productivo',
         neutral: 'Neutral',
         distractivo: 'Distractivo',
         doble_filo: 'Doble Filo'
       };
 
-
       const subcategoriasContenido = {
         ocio: 'Ocio',
         no_ocio: 'No Ocio',
-
         1: 'Ocio',
         2: 'No Ocio',
       };
 
-
       try {
-        const goals = await apiService.getWeeklyGoalsByUser(userId);
-        this.objectives = goals.map(goal => {
+        const goalsProgress = await apiService.getGoalsProgressByUser(userId);
+
+        this.objectives = goalsProgress.map(goal => {
           let subcategoriaText = '';
 
-          const minutos = goal.tiempo;
-
-          // Formatear tiempo
+          const minutos = goal.tiempo_objetivo;
           const horas = Math.floor(minutos / 60);
           const mins = minutos % 60;
 
@@ -155,15 +150,9 @@ export default {
           if (mins > 0) textoTiempo += `${mins}min`;
           if (!textoTiempo) textoTiempo = '0min';
 
-          // Signo según tipo
           const signo = goal.opcion_1 === 1 ? '+' : '-';
-
           const raw = goal.opcion_3;
-          const key = isNaN(raw)
-            ? raw.toLowerCase().trim()
-            : parseInt(raw);
-          
-          console.log(typeof goal.opcion_3, goal.opcion_3);
+          const key = isNaN(raw) ? raw.toLowerCase().trim() : parseInt(raw);
 
           if (goal.opcion_2 === 1) {
             subcategoriaText = subcategoriasSitio[key] || 'General';
@@ -173,15 +162,16 @@ export default {
 
           return {
             id: goal.id,
-            //text: `${goal.opcion_1 === 1 ? 'Aumentar' : 'Reducir'} ${subcategoriaText}`, // texto de la card
-            text: `${signo} ${textoTiempo} en ${subcategoriaText}`, // texto de la card con tiempo formateado
-            completed: false,
-            tiempo: goal.tiempo,
+            text: `${signo} ${textoTiempo} en ${subcategoriaText}`,
+            completado: goal.completado,
+            tiempo_objetivo: goal.tiempo_objetivo,
+            tiempo_actual: goal.tiempo_actual,
             opcion_1: goal.opcion_1,
             opcion_2: goal.opcion_2,
-            opcion_3: goal.opcion_3, // mantener el ID para edición
+            opcion_3: goal.opcion_3,
             fecha_limite: new Date(goal.fecha_limite),
-            datos: goal
+            fecha_inicio: goal.fecha_inicio,
+            porcentaje_progreso: goal.porcentaje_progreso
           };
         });
       } catch (error) {
@@ -204,64 +194,31 @@ export default {
       const userId = authStore.user?.id;
       if (!userId) return;
 
-      // Convertir horas + minutos a tiempo en minutos
       const tiempoTotal = (parseInt(objetivoData.horas) || 0) * 60 + (parseInt(objetivoData.minutos) || 0);
 
-      // Construimos el payload para el backend
       const payload = {
         id_usuarios: userId,
-        opcion_1: objetivoData.tipo === 'mas' ? 1 : 2, // Más = 1, Menos = 2
-        tiempo: tiempoTotal || 30,                    // default 30 min si no viene
+        opcion_1: objetivoData.tipo === 'mas' ? 1 : 2,
+        tiempo: tiempoTotal || 30,
         opcion_2: objetivoData.categoriaPrincipal.value === 'categorizacion_sitio' ? 1 : 2,
-        opcion_3: objetivoData.subcategoria.value,    // Guardar el ID de subcategoría
-        fecha_limite: objetivoData.fecha_limite ? new Date(objetivoData.fecha_limite).toISOString() : new Date().toISOString()
+        opcion_3: objetivoData.subcategoria.value,
+        fecha_limite: objetivoData.fecha_limite
+          ? new Date(objetivoData.fecha_limite).toISOString()
+          : new Date().toISOString()
       };
 
       try {
         if (objetivoData.id) {
-          // Actualizar objetivo existente
-          const updated = await apiService.updateWeeklyGoal(objetivoData.id, payload);
-          const index = this.objectives.findIndex(obj => obj.id === updated.id);
-          if (index !== -1) {
-            let subcategoriaText = '';
-            if (updated.opcion_2 === 1) subcategoriaText = {1:'Productivo',2:'Neutral',3:'Distractor',4:'Sin Categoria',5:'Doble Filo'}[updated.opcion_3] || 'General';
-            if (updated.opcion_2 === 2) subcategoriaText = {1:'Ocio',2:'No Ocio'}[updated.opcion_3] || 'General';
-
-            this.objectives.splice(index, 1, {
-              id: updated.id,
-              text: `${updated.opcion_1 === 1 ? 'Aumentar' : 'Reducir'} ${subcategoriaText}`,
-              completed: false,
-              tiempo: updated.tiempo,
-              opcion_1: updated.opcion_1,
-              opcion_2: updated.opcion_2,
-              opcion_3: updated.opcion_3,
-              fecha_limite: new Date(updated.fecha_limite),
-              datos: updated
-            });
-            this.$emit('objectiveUpdated', { id: updated.id, text: `${updated.opcion_1 === 1 ? 'Aumentar' : 'Reducir'} ${subcategoriaText}` });
-          }
+          await apiService.updateWeeklyGoal(objetivoData.id, payload);
         } else {
-          // Crear un nuevo objetivo
-          const created = await apiService.createWeeklyGoal(payload);
-          let subcategoriaText = '';
-          if (created.opcion_2 === 1) subcategoriaText = {1:'Productivo',2:'Neutral',3:'Distractor',4:'Sin Categoria',5:'Doble Filo'}[created.opcion_3] || 'General';
-          if (created.opcion_2 === 2) subcategoriaText = {1:'Ocio',2:'No Ocio'}[created.opcion_3] || 'General';
-
-          this.objectives.push({
-            id: created.id,
-            text: `${created.opcion_1 === 1 ? 'Aumentar' : 'Reducir'} ${subcategoriaText}`,
-            completed: false,
-            tiempo: created.tiempo,
-            opcion_1: created.opcion_1,
-            opcion_2: created.opcion_2,
-            opcion_3: created.opcion_3,
-            fecha_limite: new Date(created.fecha_limite),
-            datos: created
-          });
-          this.$emit('objectiveAdded', { id: created.id, text: `${created.opcion_1 === 1 ? 'Aumentar' : 'Reducir'} ${subcategoriaText}` });
+          await apiService.createWeeklyGoal(payload);
         }
+        
+        // Recargar todos los objetivos para tener datos consistentes
+        await this.loadObjectives();
+        
+        this.showNewObjectiveDialog = false;
 
-        this.showNewObjectiveDialog = false; // cerrar el diálogo
       } catch (error) {
         console.error('Error al guardar objetivo:', error);
       }
@@ -273,15 +230,9 @@ export default {
     
     async onDeleteObjective(objectiveId) {
       try {
-        // Llamamos a la API
         await apiService.deleteWeeklyGoal(objectiveId);
-
-        // Eliminamos localmente
         this.objectives = this.objectives.filter(obj => obj.id !== objectiveId);
-
-        // Emitimos evento externo si alguien lo escucha
         this.$emit('objectiveDeleted', objectiveId);
-
       } catch (error) {
         console.error('Error eliminando objetivo:', error);
         alert('No se pudo eliminar el objetivo');

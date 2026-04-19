@@ -137,6 +137,17 @@
             ></v-select>
           </div>
 
+          <!-- Mensaje de advertencia semántica -->
+          <div v-if="advertenciaSemantica" class="semantic-warning">
+            <v-icon size="14" class="mr-1">mdi-alert-circle</v-icon>
+            {{ advertenciaSemantica }}
+          </div>
+
+          <!-- Mensaje de validación de tiempo mínimo -->
+          <div v-if="tiempoEsValido && tiempoMinimoPermitido > 0 && tiempoTotalEnMinutos < tiempoMinimoPermitido" class="error-message">
+            ⚠️ Para objetivos de reducción en categorías Productivas, debes establecer un tiempo mínimo (al menos 1 minuto)
+          </div>
+
           <!-- Vista previa compacta -->
           <div class="compact-form-section" v-if="formularioValido">
             <label class="compact-section-label">Vista previa</label>
@@ -224,14 +235,14 @@ export default {
       ],
       subcategorias: {
         'categorizacion_sitio': [
-          { title: 'Productivo', value: 'productivo', icon: 'mdi-check-circle', color: 'success' },
-          { title: 'Neutral', value: 'neutral', icon: 'mdi-minus-circle', color: 'grey' },
-          { title: 'Doble Filo', value: 'doble_filo', icon: 'mdi-alert-circle', color: 'warning' },
-          { title: 'Distractivo', value: 'distractivo', icon: 'mdi-close-circle', color: 'error' }
+          { title: 'Productivo', value: 'productivo', icon: 'mdi-check-circle', color: 'success', tipo: 'productiva' },
+          { title: 'Neutral', value: 'neutral', icon: 'mdi-minus-circle', color: 'grey', tipo: 'neutral' },
+          { title: 'Doble Filo', value: 'doble_filo', icon: 'mdi-alert-circle', color: 'warning', tipo: 'doble-filo' },
+          { title: 'Distractivo', value: 'distractivo', icon: 'mdi-close-circle', color: 'error', tipo: 'distractivo' }
         ],
         'clasificacion_contenido': [
-          { title: 'Ocio', value: 'ocio', icon: 'mdi-gamepad-variant', color: 'orange' },
-          { title: 'No Ocio', value: 'no_ocio', icon: 'mdi-briefcase', color: 'indigo' }
+          { title: 'Ocio', value: 'ocio', icon: 'mdi-gamepad-variant', color: 'orange', tipo: 'ocio' },
+          { title: 'No Ocio', value: 'no_ocio', icon: 'mdi-briefcase', color: 'indigo', tipo: 'no_ocio' }
         ]
       }
     };
@@ -256,32 +267,110 @@ export default {
       const categoriaKey = this.formData.categoriaPrincipal.value;
       return this.subcategorias[categoriaKey] || [];
     },
-    tiempoTotal() {
+    
+    tiempoTotalEnMinutos() {
       const horas = parseInt(this.formData.horas) || 0;
       const minutos = parseInt(this.formData.minutos) || 0;
       return horas * 60 + minutos;
     },
+    
     tiempoEsValido() {
-      // El tiempo es válido si hay al menos horas O minutos con valor > 0
       const horas = parseInt(this.formData.horas) || 0;
       const minutos = parseInt(this.formData.minutos) || 0;
       return horas > 0 || minutos > 0;
     },
-    formularioValido() {
-      return (
-        this.formData.tipo &&
-        this.tiempoEsValido &&
-        !this.errores.horas &&
-        !this.errores.minutos &&
-        this.formData.categoriaPrincipal &&
-        this.formData.subcategoria
+    
+    // Determina si la categoría seleccionada es productiva
+    esCategoriaProductiva() {
+      if (!this.formData.subcategoria) return false;
+      const subcategoriaData = this.subcategoriasFiltradas.find(
+        s => s.value === this.formData.subcategoria.value
       );
+      return subcategoriaData?.tipo === 'productiva';
+    },
+    
+    // Determina si es objetivo de reducción (menos)
+    esObjetivoReduccion() {
+      return this.formData.tipo === 'menos';
+    },
+    
+    // Validación semántica: no tiene sentido reducir tiempo productivo
+    tieneSentidoSemantico() {
+      // Si no hay subcategoría seleccionada, aún no podemos validar
+      if (!this.formData.subcategoria) return true;
+      
+      // Caso 1: Categoría productiva + Reducir = NO tiene sentido
+      if (this.esCategoriaProductiva && this.esObjetivoReduccion) {
+        return false;
+      }
+      
+      // Caso 2: Categoría NO productiva (ocio, distractivo, neutral) + Aumentar = SÍ tiene sentido
+      // Caso 3: Categoría NO productiva + Reducir = SÍ tiene sentido
+      return true;
+    },
+    
+    // Mensaje de advertencia semántica
+    advertenciaSemantica() {
+      if (!this.formData.subcategoria) return '';
+      
+      if (this.esCategoriaProductiva && this.esObjetivoReduccion) {
+        return '⚠️ No tiene sentido reducir tiempo en sitios Productivos. Deberías aumentarlo o mantenerlo.';
+      }
+      
+      if (!this.esCategoriaProductiva && !this.esObjetivoReduccion && this.formData.tipo === 'mas') {
+        return 'ℹ️ Aumentar tiempo en categorías no productivas puede ser contraproducente. ¿Estás seguro?';
+      }
+      
+      return '';
+    },
+    
+    // Tiempo mínimo permitido según contexto
+    tiempoMinimoPermitido() {
+      // Para categoría productiva con objetivo "menos", el mínimo es 1 minuto
+      if (this.esCategoriaProductiva && this.esObjetivoReduccion) {
+        return 1;
+      }
+      return 0;
+    },
+    
+    // Override de formulario válido con validación semántica
+    formularioValido() {
+      // Validaciones básicas
+      if (!this.formData.tipo) return false;
+      if (!this.tiempoEsValido) return false;
+      if (this.errores.horas) return false;
+      if (this.errores.minutos) return false;
+      if (!this.formData.categoriaPrincipal) return false;
+      if (!this.formData.subcategoria) return false;
+      
+      // Validación semántica
+      if (!this.tieneSentidoSemantico) return false;
+      
+      // Validación de tiempo mínimo
+      if (this.tiempoMinimoPermitido > 0 && this.tiempoTotalEnMinutos < this.tiempoMinimoPermitido) {
+        return false;
+      }
+      
+      return true;
     }
   },
   watch: {
     'formData.categoriaPrincipal'() {
       this.formData.subcategoria = null;
     },
+    
+    'formData.subcategoria'() {
+      // Re-validar tiempos cuando cambia la categoría
+      this.validarYFormatearHoras();
+      this.validarYFormatearMinutos();
+    },
+    
+    'formData.tipo'() {
+      // Re-validar tiempos cuando cambia el tipo
+      this.validarYFormatearHoras();
+      this.validarYFormatearMinutos();
+    },
+    
     objectiveToEdit: {
       immediate: true,
       handler(newVal) {
@@ -294,11 +383,11 @@ export default {
             subcategoria: newVal.datos.subcategoria || null
           };
         } else {
-          // Resetear formulario si no hay objetivo a editar
           this.limpiarFormulario();
         }
       }
     },
+    
     dialog(newVal) {
       if (!newVal) {
         this.limpiarFormulario();
@@ -320,15 +409,12 @@ export default {
     limitarHoras() {
       let valor = this.formData.horas;
       
-      // Remover cualquier caracter no numérico
       valor = valor.replace(/[^\d]/g, '');
       
-      // Limitar a 2 dígitos
       if (valor.length > 2) {
         valor = valor.substring(0, 2);
       }
       
-      // Validar rango
       const numero = parseInt(valor) || 0;
       if (numero > 24) {
         valor = '24';
@@ -342,15 +428,12 @@ export default {
     limitarMinutos() {
       let valor = this.formData.minutos;
       
-      // Remover cualquier caracter no numérico
       valor = valor.replace(/[^\d]/g, '');
       
-      // Limitar a 2 dígitos
       if (valor.length > 2) {
         valor = valor.substring(0, 2);
       }
       
-      // Validar rango
       const numero = parseInt(valor) || 0;
       if (numero > 59) {
         valor = '59';
@@ -408,42 +491,50 @@ export default {
 
     // Formatear horas al perder foco
     validarYFormatearHoras() {
-      if (this.formData.horas === '') {
-        this.formData.horas = '0';
-      } else {
-        const numero = parseInt(this.formData.horas);
-        if (isNaN(numero)) {
-          this.formData.horas = '0';
-        } else if (numero > 24) {
-          this.formData.horas = '24';
-        } else if (numero < 0) {
-          this.formData.horas = '0';
+      let numero = parseInt(this.formData.horas) || 0;
+      
+      // Validación semántica para productivo + reducción
+      if (this.esCategoriaProductiva && this.esObjetivoReduccion) {
+        const minutos = parseInt(this.formData.minutos) || 0;
+        if (numero === 0 && minutos === 0) {
+          this.formData.minutos = '1';
+          this.validarMinutos();
         }
-        // Si el número es válido, lo mantenemos como está
       }
+      
+      if (numero > 24) {
+        numero = 24;
+      } else if (numero < 0) {
+        numero = 0;
+      }
+      
+      this.formData.horas = numero.toString();
       this.validarHoras();
     },
 
     // Formatear minutos al perder foco
     validarYFormatearMinutos() {
-      if (this.formData.minutos === '') {
-        this.formData.minutos = '0';
-      } else {
-        const numero = parseInt(this.formData.minutos);
-        if (isNaN(numero)) {
-          this.formData.minutos = '0';
-        } else if (numero > 59) {
-          this.formData.minutos = '59';
-        } else if (numero < 0) {
-          this.formData.minutos = '0';
+      let numero = parseInt(this.formData.minutos) || 0;
+      
+      // Validación semántica para productivo + reducción
+      if (this.esCategoriaProductiva && this.esObjetivoReduccion) {
+        const horas = parseInt(this.formData.horas) || 0;
+        if (horas === 0 && numero === 0) {
+          numero = 1;
         }
-        // Si el número es válido, lo mantenemos como está
       }
+      
+      if (numero > 59) {
+        numero = 59;
+      } else if (numero < 0) {
+        numero = 0;
+      }
+      
+      this.formData.minutos = numero.toString();
       this.validarMinutos();
     },
 
     guardar() {
-      // Aplicar validaciones finales antes de guardar
       this.validarYFormatearHoras();
       this.validarYFormatearMinutos();
       
@@ -455,7 +546,6 @@ export default {
           texto: this.generarTextoObjetivo()
         };
         
-        // Si estamos editando, incluir el ID del objetivo
         if (this.isEditing) {
           objetivoCompleto.id = this.objectiveToEdit.id;
         }
@@ -492,7 +582,7 @@ export default {
       const textoTiempo = tiempo.length > 0 ? tiempo.join(' ') : '0min';
       const accion = tipo === 'mas' ? '+' : '-';
       
-      return `${accion} ${textoTiempo} en ${subcategoria.title}`;
+      return `${accion} ${textoTiempo} en ${subcategoria?.title || ''}`;
     },
 
     limpiarFormulario() {
@@ -517,8 +607,6 @@ export default {
 </script>
 
 <style scoped>
-/* (Los estilos se mantienen igual que antes) */
-/* ESTILOS COMPACTOS PARA EL DIÁLOGO */
 .compact-dialog {
   border-radius: 12px;
   overflow: hidden;
@@ -717,6 +805,20 @@ export default {
   margin-top: 4px;
 }
 
+/* Advertencia semántica */
+.semantic-warning {
+  font-size: 0.7rem;
+  color: #ff9800;
+  font-weight: 500;
+  background: #fff3e0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border-left: 3px solid #ff9800;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+}
+
 /* Estilos para campos con error */
 .compact-time-input :deep(.v-field--error) {
   border-color: #ff5252 !important;
@@ -781,29 +883,28 @@ export default {
   backdrop-filter: none !important;
 }
 
-/* Forzar los elementos internos */
 .compact-dialog-dropdown * {
   opacity: 1 !important;
   color: inherit !important;
   background: transparent !important;
 }
 
-/* Lista e ítems */
 .compact-dialog-dropdown .v-list {
   background: transparent !important;
   padding: 4px 0 !important;
 }
+
 .compact-dialog-dropdown .v-list-item {
   min-height: 40px !important;
   padding: 0 16px !important;
   background: transparent !important;
 }
+
 .compact-dialog-dropdown .v-list-item-title {
   color: #222 !important;
   opacity: 1 !important;
 }
 
-/* Hover / activo */
 .compact-dialog-dropdown .v-list-item--active,
 .compact-dialog-dropdown .v-list-item:hover,
 .compact-dialog-dropdown .v-list-item--focused {

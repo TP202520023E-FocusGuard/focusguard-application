@@ -338,12 +338,11 @@ const handleRequestReset = async () => {
       frase_seguridad: requestData.securityPhrase
     });
 
-    if (response.valid) {
-      // ✅ Credenciales correctas
+    if (response.message === "valid" && response.token) {
+      authStore.resetToken = response.token; // guardar token temporal
       successMessage.value = "Credenciales verificadas correctamente. Ahora crea tu nueva contraseña.";
       currentStep.value = 2;
     } else {
-      // ❌ Credenciales incorrectas
       formError.value = "El email o la frase de seguridad son incorrectos.";
     }
   } catch (error) {

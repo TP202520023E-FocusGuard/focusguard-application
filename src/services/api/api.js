@@ -138,6 +138,16 @@ export const apiService = {
         }
     },
 
+    async getGoalsByUser(userId){
+        try {
+            const response = await fetch(`${API_BASE}/goals/user/${userId}`);
+            return await handleResponse(response);
+        } catch (error) {
+            console.error("Error al obtener metas:", error.message);
+            throw error;
+        }
+    },
+    
     async getGoalsProgressByUser(userId){
         try {
             const response = await fetch(`${API_BASE}/weekly-goals/progress/user/${userId}`);
@@ -308,6 +318,7 @@ export const apiService = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    token: confirmData.token,
                     new_password: confirmData.new_password
                 })
             });

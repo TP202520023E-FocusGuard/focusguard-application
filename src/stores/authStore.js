@@ -1,4 +1,3 @@
-// stores/authStore.js
 import { defineStore } from "pinia";
 import { apiService } from "../services/api/api";
 
@@ -37,6 +36,7 @@ export const useAuthStore = defineStore("auth", {
   state: () => ({
     user: readJSON(STORAGE_KEYS.user),
     token: getStorage() ? getStorage().getItem(STORAGE_KEYS.token) : null,
+    resetToken: null,
     loading: false,
     error: null
   }),
@@ -83,7 +83,7 @@ export const useAuthStore = defineStore("auth", {
         // Guardar token JWT
         this.token = response.access_token;
         
-        // 🎯 OBTENER DATOS DEL USUARIO CON SU ID
+        // OBTENER DATOS DEL USUARIO CON SU ID
         await this.fetchUserByEmail(credentials.email);
         
         // Guardar en localStorage
@@ -145,7 +145,10 @@ export const useAuthStore = defineStore("auth", {
       this.loading = true;
 
       try {
-        const response = await apiService.confirmPasswordReset(confirmData);
+        const response = await apiService.confirmPasswordReset({
+          token: this.resetToken, // 👈 AQUÍ
+          new_password: confirmData.new_password
+        });
         return response;
       } catch (error) {
         this.error = error.message || "Error al confirmar recuperación de contraseña";

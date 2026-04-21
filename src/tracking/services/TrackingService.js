@@ -53,7 +53,7 @@ export const siteService = {
             productivo: "Productivo",
             neutral: "Neutral",
             "doble filo": "Doble Filo",
-            distractor: "Distractor",
+            distractivo: "Distractivo",
             "sin categoria": "Sin Categoría",
             "sin categoría": "Sin Categoría"
         };
@@ -65,7 +65,7 @@ export const siteService = {
             "Productivo": "productivo",
             "Neutral": "neutral", 
             "Doble Filo": "doble filo",
-            "Distractor": "distractor",
+            "Distractivo": "distractivo",
             "Sin Categoría": "sin categoria"
         };
         return map[frontendClassification] || "sin categoria";

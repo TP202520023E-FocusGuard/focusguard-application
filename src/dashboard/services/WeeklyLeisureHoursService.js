@@ -6,7 +6,7 @@ export const weeklyLeisureHoursService = {
     async getWeeklyLeisureHours(startDate = null, endDate = null) {
 
         const authStore = useAuthStore();
-        const userId = 1;
+        const userId = authStore.user?.id;
 
         try {
             const data = await apiService.getWeeklyLeisureHoursByUser(

@@ -1,19 +1,18 @@
 <template>
   <v-card 
     class="objective-card" 
-    :class="tipoClase"
+    :class="[tipoClase, { 'card-error-exceeded': mostrarErrorExceso }]"
     variant="outlined" 
     elevation="0"
     @click="$emit('click', objective)"
   >
     <div class="card-content">
-      <!-- Header: icono + texto -->
       <div class="card-header">
         <div class="icono-container" :class="tipoClase">
           <v-icon size="16" class="tipo-icono">{{ tipoIcono }}</v-icon>
         </div>
         
-        <div class="objetivo-texto">
+        <div class="objetivo-texto" :class="{ 'text-error-bold': mostrarErrorExceso }">
           {{ textoObjetivo }}
         </div>
         
@@ -29,19 +28,21 @@
         </v-btn>
       </div>
       
-      <!-- Progreso: cronómetro + barra -->
-      <div class="progreso-section">
-        <div class="cronometro">
-          <v-icon size="12" class="timer-icon">mdi-timer-outline</v-icon>
+      <div class="progreso-section" :class="{ 'progreso-error': mostrarErrorExceso }">
+        <div class="cronometro" :class="cronometroClase">
+          <v-icon size="12" class="timer-icon" :color="timerIconColor">
+            {{ estaCompletado ? 'mdi-check-circle' : 'mdi-timer-outline' }}
+          </v-icon>
           <span class="tiempo-valor">{{ tiempoFormateado }}</span>
         </div>
         
         <div class="barra-container">
           <v-progress-linear
-            :model-value="porcentajeProgreso"
+            :model-value="porcentajeVisual"
             :color="barraColor"
             height="4"
             rounded
+            :striped="mostrarErrorExceso"
           ></v-progress-linear>
         </div>
         
@@ -63,9 +64,18 @@ export default {
     }
   },
   computed: {
-    // Tipo: '+' para aumentar, '-' para reducir
+    // Tipo: '+' para aumentar (1), '-' para reducir (2)
     esAumentar() {
       return this.objective.opcion_1 === 1;
+    },
+
+    estaCompletado() {
+      return this.objective.completado === true;
+    },
+
+    // Nueva: Detecta si se pasó del límite en objetivos de tipo "menos"
+    mostrarErrorExceso() {
+      return !this.esAumentar && !this.estaCompletado;
     },
     
     tipoClase() {
@@ -77,7 +87,17 @@ export default {
     },
     
     barraColor() {
-      return this.esAumentar ? 'success' : 'warning';
+      if (this.esAumentar) {
+        return this.estaCompletado ? 'success' : 'warning';
+      } else {
+        // Rojo si se pasó del límite, verde si sigue cumpliendo
+        return this.estaCompletado ? 'success' : 'error';
+      }
+    },
+
+    timerIconColor() {
+      if (this.mostrarErrorExceso) return 'error';
+      return this.estaCompletado ? 'success' : '';
     },
     
     // Extraer categoría del texto
@@ -87,7 +107,6 @@ export default {
       return match ? match[1] : '';
     },
     
-    // Texto del objetivo
     textoObjetivo() {
       const tiempo = this.objective.tiempo_objetivo || this.objective.tiempo || 0;
       const horas = Math.floor(tiempo / 60);
@@ -106,199 +125,138 @@ export default {
       return `${signo} ${tiempoStr}`;
     },
     
-    // Tiempo objetivo en minutos
-    tiempoObjetivoMinutos() {
-      return this.objective.tiempo_objetivo || this.objective.tiempo || 0;
-    },
-    
-    // Tiempo actual en minutos (desde el backend)
     tiempoActualMinutos() {
       return this.objective.tiempo_actual || 0;
     },
     
-    // Porcentaje de progreso (desde el backend)
     porcentajeProgreso() {
       return this.objective.porcentaje_progreso || 0;
     },
+
+    porcentajeVisual() {
+      // Muestra la barra llena si se pasó del límite
+      return Math.min(100, this.porcentajeProgreso);
+    },
     
-    // Tiempo formateado para mostrar
     tiempoFormateado() {
-      const minutos = this.tiempoActualMinutos;
-      const horas = Math.floor(minutos / 60);
-      const mins = minutos % 60;
+      const minutos = this.tiempoActualMinutos; // Aquí viene el decimal
       
-      if (horas > 0 && mins > 0) {
-        return `${horas}h ${mins}m`;
+      if (minutos > 0 && minutos < 1) {
+        // Si es menos de un minuto, muestra segundos o decimal
+        return `${(minutos * 60).toFixed(0)}s`; 
+        // O si prefieres decimales: return `${minutos.toFixed(1)}m`;
       }
-      if (horas > 0) {
-        return `${horas}h`;
-      }
+
+      const horas = Math.floor(minutos / 60);
+      const mins = Math.floor(minutos % 60); // Math.floor puede convertir 0.9 en 0
+      
+      if (horas > 0) return `${horas}h ${mins}m`;
       return `${mins}m`;
     },
     
-    // Meta formateada
     metaTexto() {
-      const minutos = this.tiempoObjetivoMinutos;
+      const minutos = this.objective.tiempo_objetivo || this.objective.tiempo || 0;
       const horas = Math.floor(minutos / 60);
       const mins = minutos % 60;
       
-      if (horas > 0 && mins > 0) {
-        return `${horas}h ${mins}m`;
-      }
-      if (horas > 0) {
-        return `${horas}h`;
-      }
+      if (horas > 0) return `${horas}h ${mins}m`;
       return `${mins}m`;
     },
     
-    // Estado completado (desde el backend)
-    estaCompletado() {
-      return this.objective.completado === true;
+    cronometroClase() {
+      if (this.mostrarErrorExceso) return 'text-error font-weight-bold';
+      return this.estaCompletado ? 'text-success font-weight-bold' : 'text-grey-darken-1';
     }
   }
 };
 </script>
 
-
 <style scoped>
 .objective-card {
   border-radius: 12px;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   background: white;
   border: 1px solid #e8ecef;
+  position: relative;
+  overflow: hidden;
 }
 
 .objective-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-.objective-card.objetivo-mas {
-  border-left: 3px solid #4caf50;
+/* Bordes laterales de tipo */
+.objective-card.objetivo-mas { border-left: 4px solid #4caf50; }
+.objective-card.objetivo-menos { border-left: 4px solid #ff9800; }
+
+/* Estado de Error (Cuando se pasa del límite) */
+.card-error-exceeded {
+  border: 1.5px solid rgb(var(--v-theme-error)) !important;
+  background-color: rgba(var(--v-theme-error), 0.02);
 }
 
-.objective-card.objetivo-menos {
-  border-left: 3px solid #ff9800;
+.text-error-bold {
+  color: rgb(var(--v-theme-error)) !important;
+  font-weight: 800;
 }
 
-.card-content {
-  padding: 10px 12px;
-}
+.card-content { padding: 12px; }
 
-/* Header */
 .card-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .icono-container {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
 }
 
-.icono-container.objetivo-mas {
-  background: rgba(76, 175, 80, 0.15);
-}
-
-.icono-container.objetivo-menos {
-  background: rgba(255, 152, 0, 0.15);
-}
-
-.tipo-icono {
-  font-size: 14px;
-}
-
-.icono-container.objetivo-mas .tipo-icono {
-  color: #2e7d32;
-}
-
-.icono-container.objetivo-menos .tipo-icono {
-  color: #e65100;
-}
+.icono-container.objetivo-mas { background: rgba(76, 175, 80, 0.12); color: #2e7d32; }
+.icono-container.objetivo-menos { background: rgba(255, 152, 0, 0.12); color: #e65100; }
 
 .objetivo-texto {
   flex: 1;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #1a1a1a;
-  line-height: 1.3;
+  color: #2c3e50;
 }
 
-.delete-btn {
-  opacity: 0.4;
-  transition: opacity 0.2s;
-}
-
-.delete-btn:hover {
-  opacity: 1;
-}
-
-/* Progreso */
 .progreso-section {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: #f8f9fa;
-  padding: 4px 8px;
-  border-radius: 8px;
+  gap: 8px;
+  background: #fcfdfe;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid #f0f2f5;
 }
 
-.cronometro {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  flex-shrink: 0;
+.progreso-error {
+  background: rgba(var(--v-theme-error), 0.05);
+  border-color: rgba(var(--v-theme-error), 0.1);
 }
 
-.timer-icon {
-  color: #666;
-}
+.cronometro { display: flex; align-items: center; gap: 4px; }
 
-.tiempo-valor {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #333;
-}
+.tiempo-valor { font-size: 0.75rem; }
 
-.barra-container {
-  flex: 1;
-}
-
-.meta {
-  flex-shrink: 0;
-}
+.barra-container { flex: 1; }
 
 .meta-texto {
-  font-size: 0.6rem;
-  color: #999;
-  font-weight: 500;
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-weight: 600;
 }
 
-/* Completado */
-.objective-card.completado {
-  opacity: 0.7;
-}
-
-/* Responsive */
-@media (max-width: 500px) {
-  .card-content {
-    padding: 8px 10px;
-  }
-  
-  .objetivo-texto {
-    font-size: 0.75rem;
-  }
-  
-  .tiempo-valor {
-    font-size: 0.65rem;
-  }
-}
+.text-error { color: rgb(var(--v-theme-error)) !important; }
+.text-success { color: rgb(var(--v-theme-success)) !important; }
 </style>

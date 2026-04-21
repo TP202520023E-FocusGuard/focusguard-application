@@ -98,9 +98,12 @@
                   backgroundColor: getBarColor(day.hours)
                 }"
               >
+                <!-- Tooltip mejorado: siempre visible para valores > 0 -->
                 <span class="bar-value" v-if="hoveredDay === index && day.hours > 0">
-                  {{ day.hours }}h
+                  {{ formatHours(day.hours) }}
                 </span>
+                <!-- Indicador visual para valores muy pequeños -->
+                <div class="bar-mini-indicator" v-if="day.hours > 0 && day.hours < 0.5"></div>
               </div>
             </div>
             
@@ -108,8 +111,9 @@
               {{ getDayShortName(day.name) }}
             </div>
             
+            <!-- Mostrar horas formateadas incluso si son pequeñas -->
             <div class="day-hours-mobile" v-if="day.hours > 0">
-              {{ day.hours }}h
+              {{ formatHours(day.hours) }}
             </div>
           </div>
         </div>
@@ -248,6 +252,14 @@ const daysConfig = [
 const weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 
 // ========== HELPERS ==========
+// Nueva función para formatear horas correctamente
+const formatHours = (hours) => {
+  if (hours === 0) return '0h'
+  if (hours < 0.1) return `${hours.toFixed(2)}h`
+  if (hours < 1) return `${hours.toFixed(1)}h`
+  return `${hours.toFixed(1)}h`
+}
+
 const getWeekRange = (date) => {
   const current = new Date(date)
   const day = current.getDay()
@@ -290,13 +302,29 @@ const getDayShortName = (fullName) => {
 }
 
 const getBarHeight = (hours) => {
-  const maxHeight = 64
-  const maxHours = 8
-  const height = (hours / maxHours) * maxHeight
-  return `${Math.min(Math.max(height, 4), maxHeight)}px`
+  // Configuración de alturas
+  const MAX_HEIGHT = 80        // Altura máxima de la barra en píxeles
+  const MAX_HOURS = 8          // 8 horas = altura máxima
+  const MIN_BAR_HEIGHT = 8     // Altura mínima para cualquier valor > 0
+
+  if (hours === 0) return '0px'
+  
+  // Calculamos la altura proporcional
+  let height = (hours / MAX_HOURS) * MAX_HEIGHT
+  
+  // Aseguramos la altura mínima
+  if (height < MIN_BAR_HEIGHT) {
+    height = MIN_BAR_HEIGHT
+  }
+  
+  // Limitamos a la altura máxima
+  height = Math.min(height, MAX_HEIGHT)
+  
+  return `${height}px`
 }
 
 const getBarColor = (hours) => {
+  if (hours === 0) return '#E0E0E0' // Gris para valores cero
   if (hours <= 2) return '#4CAF50'
   if (hours <= 4) return '#FF9800'
   return '#F44336'
@@ -405,9 +433,14 @@ const loadWeekData = async () => {
     const { monday, sunday } = getWeekRange(currentAnchorDate.value)
     startDate.value = monday
     endDate.value = sunday
+
+    const toLocalISO = (date) => {
+      const pad = (n) => n.toString().padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    }
     
-    const mondayStr = monday.toISOString().split('T')[0]
-    const sundayStr = sunday.toISOString().split('T')[0]
+    const mondayStr = toLocalISO(monday);
+    const sundayStr = toLocalISO(sunday);
     
     const response = await weeklyLeisureHoursService.getWeeklyLeisureHours(mondayStr, sundayStr)
     
@@ -667,7 +700,7 @@ onMounted(() => {
   align-items: flex-end;
   justify-content: space-between;
   gap: 8px;
-  padding: 16px 4px 8px;
+  padding: 24px 4px 8px; /* Aumentado padding superior para el tooltip */
   background: #fafafa;
   border-radius: 16px;
   min-height: 140px;
@@ -682,7 +715,7 @@ onMounted(() => {
 }
 
 .bar-wrapper {
-  height: 70px;
+  height: 90px; /* Aumentado para dar espacio al tooltip */
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -691,8 +724,8 @@ onMounted(() => {
 
 .bar {
   width: 100%;
-  max-width: 32px;
-  min-width: 20px;
+  max-width: 40px; /* Ligéramente más ancho para mejor visibilidad */
+  min-width: 24px;
   border-radius: 6px 6px 4px 4px;
   transition: all 0.2s ease;
   position: relative;
@@ -706,21 +739,37 @@ onMounted(() => {
 
 .bar-value {
   position: absolute;
-  top: -22px;
+  top: -28px; /* Ajustado para que no se corte */
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: #FF6B35;
   background: white;
-  padding: 2px 6px;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  padding: 2px 8px;
+  border-radius: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Indicador visual para valores muy pequeños */
+.bar-mini-indicator {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: #FF6B35;
+  border-radius: 50%;
+  opacity: 0.8;
+  box-shadow: 0 0 0 1px white;
 }
 
 .day-name {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: #555;
 }
@@ -731,8 +780,13 @@ onMounted(() => {
 
 .day-hours-mobile {
   display: none;
-  font-size: 0.6rem;
-  color: #999;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #666;
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 12px;
+  margin-top: 4px;
 }
 
 /* ========== LEYENDA ========== */
@@ -740,7 +794,7 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   gap: 20px;
-  margin-top: 16px;
+  margin-top: 20px;
   padding-top: 12px;
   border-top: 1px solid #eee;
 }
@@ -749,14 +803,14 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: #666;
 }
 
 .legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
 }
 
 .legend-dot.low { background: #4CAF50; }
@@ -771,9 +825,9 @@ onMounted(() => {
   padding: 10px 12px;
   background: #f0f7ff;
   border-radius: 12px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: #1a1a1a;
-  margin-top: 12px;
+  margin-top: 16px;
 }
 
 .info-icon {
@@ -810,7 +864,7 @@ onMounted(() => {
 }
 
 .weekday {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #999;
   padding: 8px 0;
@@ -819,7 +873,7 @@ onMounted(() => {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 6px;
   margin-bottom: 16px;
 }
 
@@ -839,7 +893,7 @@ onMounted(() => {
 }
 
 .calendar-day.other-month {
-  opacity: 0.35;
+  opacity: 0.4;
 }
 
 .calendar-day.selected {
@@ -861,7 +915,7 @@ onMounted(() => {
 }
 
 .day-number {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 500;
   color: #333;
 }
@@ -876,7 +930,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: #999;
 }
 
@@ -885,7 +939,7 @@ onMounted(() => {
 }
 
 /* ========== RESPONSIVE ========== */
-@media (max-width: 500px) {
+@media (max-width: 600px) {
   .stats-grid {
     gap: 8px;
   }
@@ -895,20 +949,24 @@ onMounted(() => {
   }
   
   .stat-value {
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
   
   .chart-bars-container {
-    gap: 4px;
-    padding: 12px 2px 6px;
+    gap: 6px;
+    padding: 20px 2px 8px;
   }
   
   .bar {
-    min-width: 16px;
+    min-width: 20px;
+  }
+  
+  .bar-wrapper {
+    height: 80px;
   }
   
   .day-name {
-    font-size: 0.6rem;
+    font-size: 0.65rem;
   }
   
   .day-hours-mobile {
@@ -916,7 +974,7 @@ onMounted(() => {
   }
   
   .week-range span {
-    font-size: 0.65rem;
+    font-size: 0.7rem;
   }
   
   .today-btn span {
@@ -924,7 +982,7 @@ onMounted(() => {
   }
   
   .today-btn {
-    min-width: 32px !important;
+    min-width: 36px !important;
     padding: 0 8px !important;
   }
 }

@@ -158,6 +158,28 @@ export default {
       }
     },
 
+    sendDataToExtension(){
+      // ENVIAR DATOS A LA EXTENSIÓN
+
+      const EXTENSION_ID = "bbojhbamnnececlfenffckgabakbdfop";
+
+      if (typeof chrome !== "undefined" && chrome.runtime) {
+
+        chrome.runtime.sendMessage(EXTENSION_ID, { action: "update-rest-time", newRestTime: this.leisureTime }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.warn("La extensión no está instalada o no es accesible.");
+            return;
+          }
+
+          if (response && response.status === "success")
+            console.log("Tiempo actualizado en la extensión", response);
+          else
+            console.log("Sincronización falla:", response.message);
+        });
+
+      } else console.warn("La extensión no está instalada o no se tiene configurado el puente de comunicación.");
+    },
+
     async saveSettings() {
       if (!this.hasChanges) return;
 
@@ -166,6 +188,8 @@ export default {
       try {
         const authStore = useAuthStore();
         const userId = authStore.user?.id;
+
+        this.sendDataToExtension(); // Connexion con la extensión
 
         await apiService.updateLeisureTime(userId, {
           tiempo_total: this.leisureTime

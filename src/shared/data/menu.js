@@ -7,12 +7,12 @@ export const menuItems = [
       {
         name: "Información personal",
         route: "/profile/info",
-      },
+      }/* ,
       {
         name: "Mis Categorías",  // <-- Nuevo submenú
         route: "/profile/categories",  // Ruta sugerida (ajústala según tu router)
         icon: "mdi-shape-plus"  // Icono sugerido (ajústalo según tus preferencias)
-      }
+      } */
     ],
   },
   {

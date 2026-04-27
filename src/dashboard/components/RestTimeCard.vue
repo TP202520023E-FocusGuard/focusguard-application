@@ -37,9 +37,16 @@
           
           <div class="progress-content">
             <div class="time-remaining" :style="{ color: circleColor }">
-              {{ formatTime(timeRemaining) }}
+              {{ isExceeded ? `+${formatTime(timeUsed - totalTime)}` : formatTime(timeRemaining) }}
             </div>
-            <div class="time-label">restante</div>
+
+            <div v-if="!isExceeded" class="time-label">
+              restante
+            </div>
+
+            <div v-else class="time-label text-error">
+              excedido
+            </div>
           </div>
         </div>
         
@@ -67,11 +74,16 @@ const authStore = useAuthStore()
 const timeUsed = ref(0) // minutos usados
 const totalTime = ref(0) // minutos totales
 
-const timeRemaining = computed(() => totalTime.value - timeUsed.value)
+const timeRemaining = computed(() => {
+  return Math.max(0, totalTime.value - timeUsed.value)
+})
+
+const isExceeded = computed(() => timeUsed.value > totalTime.value)
 
 const progressPercentage = computed(() => {
   if (!totalTime.value) return 0
-  return (timeRemaining.value / totalTime.value) * 100
+  const percentage = (timeRemaining.value / totalTime.value) * 100
+  return Math.min(100, Math.max(0, percentage))
 })
 
 const circumference = computed(() => 2 * Math.PI * 38)
@@ -81,6 +93,7 @@ const strokeDashoffset = computed(() => {
 })
 
 const circleColor = computed(() => {
+  if (isExceeded.value) return '#9C27B0' // Morado - excedido
   if (progressPercentage.value >= 50) return '#4CAF50' // Verde - tiempo suficiente
   if (progressPercentage.value >= 25) return '#FF9800' // Naranja - tiempo medio
   return '#F44336' // Rojo - poco tiempo

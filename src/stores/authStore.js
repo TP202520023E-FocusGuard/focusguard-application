@@ -146,7 +146,7 @@ export const useAuthStore = defineStore("auth", {
 
       try {
         const response = await apiService.confirmPasswordReset({
-          token: this.resetToken, // 👈 AQUÍ
+          token: this.resetToken, 
           new_password: confirmData.new_password
         });
         return response;
@@ -161,7 +161,7 @@ export const useAuthStore = defineStore("auth", {
     checkAuth() {
       const hasToken = Boolean(this.token);
       const hasUser = Boolean(this.user?.id);
-      console.log("🔍 Estado de autenticación:", { hasToken, hasUser, user: this.user });
+      console.log("Estado de autenticación:", { hasToken, hasUser, user: this.user });
       return hasToken && hasUser;
     },
 

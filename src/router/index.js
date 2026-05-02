@@ -33,7 +33,7 @@ const routes = [
     name: "personal-info",
     meta: { requiresAuth: true }
   },
-  {
+  /*{
     path: "/profile/categories",
     component: UserCategories,
     name: "user-categories",
@@ -44,7 +44,7 @@ const routes = [
     component: ThemeSelector,
     name: "theme-selector",
     meta: { requiresAuth: true }
-  },
+  },*/
   {
     path: "/auth/login",
     name: "login",

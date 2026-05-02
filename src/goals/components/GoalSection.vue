@@ -76,7 +76,7 @@
 
 <script>
 import { goalsService } from '../../goals/services/GoalsService';
-import { authStore } from '../../stores/authStore';
+import { useAuthStore } from '../../stores/authStore';
 
 export default {
   name: "GoalSection",
@@ -111,20 +111,18 @@ export default {
         this.loading = true;
         try {
           const goalData = {
-            id_usuarios: authStore.user?.id,
             texto: this.currentGoal.trim()
           };
 
           const savedGoal = await goalsService.saveGoal(goalData);
-          
+
           this.savedGoal = savedGoal.texto;
           this.goalId = savedGoal.id;
           this.currentGoal = '';
-          
+
           this.$emit('goalSaved', this.savedGoal);
         } catch (error) {
           console.error('Error guardando meta:', error);
-          // Puedes mostrar un mensaje de error al usuario
         } finally {
           this.loading = false;
         }

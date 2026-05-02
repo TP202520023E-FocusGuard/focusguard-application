@@ -76,6 +76,7 @@
 
 <script>
 import { goalsService } from '../../goals/services/GoalsService';
+import { authStore } from '../../stores/authStore';
 
 export default {
   name: "GoalSection",
@@ -110,7 +111,7 @@ export default {
         this.loading = true;
         try {
           const goalData = {
-            id_usuarios: this.userId,
+            id_usuarios: authStore.user?.id,
             texto: this.currentGoal.trim()
           };
 

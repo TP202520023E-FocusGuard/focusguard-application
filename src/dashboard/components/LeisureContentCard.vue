@@ -444,11 +444,13 @@ const loadWeekData = async () => {
     
     const response = await weeklyLeisureHoursService.getWeeklyLeisureHours(mondayStr, sundayStr)
     
-    const mapped = daysConfig.map(config => {
+    // CORRECCIÓN: Agregamos (config, index) para que 'index' exista y valga de 0 a 6
+    const mapped = daysConfig.map((config, index) => {
       const found = response.find(item => {
         const itemDay = item.day?.trim().toLowerCase()
         const configDay = config.en.trim().toLowerCase()
         const itemWeekday = item.weekday !== undefined ? Number(item.weekday) : null
+        
         return itemDay === configDay || itemWeekday === index
       })
       

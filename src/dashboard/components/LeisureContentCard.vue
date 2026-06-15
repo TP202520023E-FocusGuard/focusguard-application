@@ -434,7 +434,7 @@ const loadWeekData = async () => {
     startDate.value = monday
     endDate.value = sunday
 
-    const toLocalISO = (date) => {
+    const toLocalISO = (date, isEnd = false) => {
       const pad = (n) => n.toString().padStart(2, '0');
       const timeStr = isEnd ? 'T23:59:59' : 'T00:00:00';
       return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}${timeStr}`;

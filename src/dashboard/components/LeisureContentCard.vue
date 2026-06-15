@@ -436,11 +436,12 @@ const loadWeekData = async () => {
 
     const toLocalISO = (date) => {
       const pad = (n) => n.toString().padStart(2, '0');
-      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+      const timeStr = isEnd ? 'T23:59:59' : 'T00:00:00';
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}${timeStr}`;
     }
     
-    const mondayStr = toLocalISO(monday);
-    const sundayStr = toLocalISO(sunday);
+    const mondayStr = toLocalISO(monday, false);
+    const sundayStr = toLocalISO(sunday, true);
     console.log("=== 🚀 ENVIANDO PETICIÓN AL BACKEND ===");
     console.log("Fecha Inicio (mondayStr):", mondayStr);
     console.log("Fecha Fin (sundayStr):", sundayStr);

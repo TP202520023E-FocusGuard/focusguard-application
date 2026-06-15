@@ -441,9 +441,12 @@ const loadWeekData = async () => {
     
     const mondayStr = toLocalISO(monday);
     const sundayStr = toLocalISO(sunday);
-    
+    console.log("=== 🚀 ENVIANDO PETICIÓN AL BACKEND ===");
+    console.log("Fecha Inicio (mondayStr):", mondayStr);
+    console.log("Fecha Fin (sundayStr):", sundayStr);
     const response = await weeklyLeisureHoursService.getWeeklyLeisureHours(mondayStr, sundayStr)
-    
+    console.log("=== 📥 RESPUESTA DEL BACKEND ===");
+    console.log("Data cruda recibida:", JSON.parse(JSON.stringify(response)));
     // CORRECCIÓN: Agregamos (config, index) para que 'index' exista y valga de 0 a 6
     const mapped = daysConfig.map((config, index) => {
       const found = response.find(item => {
@@ -461,7 +464,8 @@ const loadWeekData = async () => {
         hours: found ? Math.round(parseFloat(found.total_hours) * 10) / 10 : 0
       }
     })
-    
+    console.log("=== 📊 DATA PROCESADA PARA EL GRÁFICO ===");
+    console.log("Array mapped final:", mapped);
     weekData.value = mapped
     
   } catch (error) {

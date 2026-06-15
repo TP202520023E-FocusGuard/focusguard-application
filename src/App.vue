@@ -12,12 +12,26 @@
 </template>
 
 <script setup>
+
 import { computed } from "vue";
 import { useRoute } from "vue-router";
+import { onMounted } from "vue";
+import { useAuthStore } from "./stores/authStore";
+
 import Sidebar from "./shared/components/SideBar.vue";
 
 const route = useRoute();
+onMounted(() => {
+  window.addEventListener("storage", (event) => {
+    if (event.key === "focusguard-logout-event") {
+      const auth = useAuthStore();
 
+      auth.logout();
+
+      router.push("/auth/login");
+    }
+  });
+});
 const isAuthLayout = computed(() => route.meta?.layout === "auth");
 </script>
 

@@ -1,20 +1,19 @@
 // FABRICIO
-const API_BASE = 'https://focusguard-api-d7ayede7fufnbshq.eastus-01.azurewebsites.net/api/v1';
+//const API_BASE = 'https://focusguard-api-d7ayede7fufnbshq.eastus-01.azurewebsites.net/api/v1';
 
 // RAFAEL
-// const API_BASE = 'http://127.0.0.1:8000/api/v1';
+ const API_BASE = 'http://127.0.0.1:8080/api/v1';
 
 async function handleResponse(response) {
+    const data = await response.json().catch(() => null);
+
     if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        try {
-            const data = await response.json();
-            if (data?.detail) errorMessage += ` - ${data.detail}`;
-        } catch {
-        }
-        throw new Error(errorMessage);
+        throw new Error(
+            data?.detail || "Ocurrió un error inesperado"
+        );
     }
-    return response.json();
+    
+    return data;
 }
 
 export const apiService = {
@@ -390,5 +389,15 @@ export const apiService = {
             console.error("Error al obtener el tiempo de ocio: ", error.message);
             throw error;
         }
+    },
+
+    async getMe() {
+      const response = await fetch(`${API_BASE}/users/me`, {
+        headers: {
+            "Authorization": `Bearer ${localStorage.getItem("focusguard-token") || ""}`
+        }
+      });
+
+      return handleResponse(response);
     }
 };

@@ -54,15 +54,6 @@ export const useAuthStore = defineStore("auth", {
 
       try {
         const response = await apiService.register(userData);
-        
-        // OBTENER Y GUARDAR EL USUARIO CON SU ID
-        await this.fetchUserByEmail(userData.email);
-
-        // HACER LOGIN AUTOMÁTICO
-        await this.login({
-          email: userData.email,
-          password: userData.password
-        });
 
         return response;
       } catch (error) {
@@ -94,7 +85,7 @@ export const useAuthStore = defineStore("auth", {
           writeJSON(STORAGE_KEYS.user, this.user);
         }
 
-        console.log("✅ Login exitoso. User ID:", this.user?.id); // Debug
+        console.log("Login exitoso. User ID:", this.user?.id); // Debug
         return response;
       } catch (error) {
         this.error = error.message || "Error al iniciar sesión.";
@@ -171,10 +162,23 @@ export const useAuthStore = defineStore("auth", {
       this.error = null;
       removeItem(STORAGE_KEYS.token);
       removeItem(STORAGE_KEYS.user);
+      localStorage.setItem("focusguard-logout-event", Date.now().toString());
     },
 
     clearError() {
       this.error = null;
+    },
+
+    async validateSession() {
+      if (!this.token) return false;
+
+      try {
+        await apiService.getMe();
+        return true;
+      } catch (error) {
+        this.logout();
+        return false;
+      }
     }
   }
 });

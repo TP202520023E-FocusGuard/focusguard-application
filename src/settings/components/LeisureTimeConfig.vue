@@ -1,4 +1,20 @@
 <template>
+  <v-alert
+    v-if="errorMessage"
+    type="error"
+    class="mb-3"
+    density="compact"
+    variant="tonal"
+  >
+    {{ errorMessage }}
+  </v-alert>
+
+  <v-progress-circular
+    v-if="loading"
+    indeterminate
+    class="ma-5 d-flex mx-auto"
+  />
+  
   <v-card class="premium-card pa-5" elevation="0">
 
     <!-- Header emocional -->
@@ -88,6 +104,7 @@ export default {
       saving: false,
       showSuccess: false,
       loading: true,
+      errorMessage: null,
 
       timePresets: [
         { value: 15, label: "🔥 Enfoque" },
@@ -125,10 +142,8 @@ export default {
     },
 
     insightText() {
-      if (this.leisureTime <= 30)
-        return "Estás priorizando tus objetivos 🚀";
-      if (this.leisureTime <= 60)
-        return "Mantienes un balance saludable 👍";
+      if (this.leisureTime <= 30) return "Estás priorizando tus objetivos 🚀";
+      if (this.leisureTime <= 60) return "Mantienes un balance saludable 👍";
       return "Podrías estar perdiendo foco ⚠️";
     }
   },
@@ -136,13 +151,15 @@ export default {
   methods: {
     chipStyle(value) {
       return {
-        background:
-          this.leisureTime === value ? this.currentColor : "#eee",
+        background: this.leisureTime === value ? this.currentColor : "#eee",
         color: this.leisureTime === value ? "#fff" : "#555"
       };
     },
 
     async loadConfiguration() {
+      this.loading = true;
+      this.errorMessage = null;
+
       try {
         const authStore = useAuthStore();
         const userId = authStore.user?.id;
@@ -151,45 +168,48 @@ export default {
 
         this.leisureTime = res?.tiempo_total ?? 30;
         this.originalLeisureTime = this.leisureTime;
-      } catch {
+
+      } catch (error) {
+        console.error("Error cargando configuración:", error);
+
+        if (!navigator.onLine) {
+          this.errorMessage = "Sin conexión a internet";
+        } else {
+          this.errorMessage = "No se pudo conectar al servidor";
+        }
+
         this.leisureTime = 30;
+
       } finally {
         this.loading = false;
       }
     },
 
-    sendDataToExtension(){
-      // ENVIAR DATOS A LA EXTENSIÓN
-
+    sendDataToExtension() {
       const EXTENSION_ID = "bbojhbamnnececlfenffckgabakbdfop";
 
       if (typeof chrome !== "undefined" && chrome.runtime) {
-
-        chrome.runtime.sendMessage(EXTENSION_ID, { action: "update-rest-time", newRestTime: this.leisureTime }, (response) => {
-          if (chrome.runtime.lastError) {
-            console.warn("La extensión no está instalada o no es accesible.");
-            return;
+        chrome.runtime.sendMessage(
+          EXTENSION_ID,
+          { action: "update-rest-time", newRestTime: this.leisureTime },
+          (response) => {
+            if (chrome.runtime.lastError) return;
           }
-
-          if (response && response.status === "success")
-            console.log("Tiempo actualizado en la extensión", response);
-          else
-            console.log("Sincronización falla:", response.message);
-        });
-
-      } else console.warn("La extensión no está instalada o no se tiene configurado el puente de comunicación.");
+        );
+      }
     },
 
     async saveSettings() {
       if (!this.hasChanges) return;
 
       this.saving = true;
+      this.errorMessage = null;
 
       try {
         const authStore = useAuthStore();
         const userId = authStore.user?.id;
 
-        this.sendDataToExtension(); // Connexion con la extensión
+        this.sendDataToExtension();
 
         await apiService.updateLeisureTime(userId, {
           tiempo_total: this.leisureTime
@@ -197,6 +217,15 @@ export default {
 
         this.originalLeisureTime = this.leisureTime;
         this.showSuccess = true;
+
+      } catch (error) {
+        console.error("Error guardando:", error);
+
+        if (!navigator.onLine) {
+          this.errorMessage = "Sin conexión a internet";
+        } else {
+          this.errorMessage = "Error al guardar configuración";
+        }
 
       } finally {
         this.saving = false;

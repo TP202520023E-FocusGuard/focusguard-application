@@ -15,6 +15,9 @@ import '@mdi/font/css/materialdesignicons.css'
 
 // Store
 import { useThemeStore } from './stores/themeStore'
+import { useAuthStore } from './stores/authStore'
+
+import { nextTick } from 'vue'
 
 const pinia = createPinia()
 
@@ -44,8 +47,15 @@ app.use(pinia)
 app.use(router)
 app.use(vuetify)
 
+const auth = useAuthStore();
 // Aplicar tema al iniciar
 const themeStore = useThemeStore()
 themeStore.applyGlobalTheme()
 
-app.mount('#app')
+nextTick(async () => {
+  const auth = useAuthStore()
+
+  await auth.validateSession()
+
+  app.mount('#app')
+})

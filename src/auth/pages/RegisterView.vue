@@ -386,7 +386,7 @@ const handleSubmit = async () => {
       password: form.password,
       frase_seguridad: form.securityPhrase
     });
-    router.push("/tracking");
+    router.push("/auth/login");
   } catch (error) {
     console.error(error);
   }

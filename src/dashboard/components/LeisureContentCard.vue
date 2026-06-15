@@ -340,7 +340,24 @@ const calendarDays = computed(() => {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   
-  // Días del mes anterior
+  // Obtenemos el inicio (Lunes) de la semana real de hoy para comparar en milisegundos
+  const currentRealMonday = getWeekStart(today).getTime()
+  
+  // Helper interno unificado para procesar las propiedades de cada día
+  const processDay = (fullDate, isCurrentMonth) => {
+    const dayMonday = getWeekStart(fullDate).getTime()
+    return {
+      date: fullDate.getDate(),
+      fullDate,
+      isCurrentMonth,
+      isSelected: isSameWeek(fullDate, selectedPickerDate.value),
+      isToday: fullDate.getTime() === today.getTime(),
+      // REGLA DE NEGOCIO: Si el lunes de este día supera al lunes de la semana actual, queda bloqueado
+      isFuture: dayMonday > currentRealMonday
+    }
+  }
+
+  // 1. Días del mes anterior (si los hay)
   const prevMonthDate = new Date(pickerYear.value, pickerMonth.value, 0)
   const prevMonthDays = prevMonthDate.getDate()
   
@@ -349,43 +366,28 @@ const calendarDays = computed(() => {
     const fullDate = new Date(pickerYear.value, pickerMonth.value - 1, dateNum)
     fullDate.setHours(0, 0, 0, 0)
     
-    days.push({
-      date: dateNum,
-      fullDate,
-      isCurrentMonth: false,
-      isSelected: isSameWeek(fullDate, selectedPickerDate.value),
-      isToday: fullDate.getTime() === today.getTime()
-    })
+    // Insertamos usando el helper
+    days.push(processDay(fullDate, false))
   }
   
-  // Días del mes actual
+  // 2. Días del mes actual
   const daysInMonth = new Date(pickerYear.value, pickerMonth.value + 1, 0).getDate()
   for (let i = 1; i <= daysInMonth; i++) {
     const fullDate = new Date(pickerYear.value, pickerMonth.value, i)
     fullDate.setHours(0, 0, 0, 0)
     
-    days.push({
-      date: i,
-      fullDate,
-      isCurrentMonth: true,
-      isSelected: isSameWeek(fullDate, selectedPickerDate.value),
-      isToday: fullDate.getTime() === today.getTime()
-    })
+    // Insertamos usando el helper
+    days.push(processDay(fullDate, true))
   }
   
-  // Días del mes siguiente (para completar 42 días = 6 semanas)
+  // 3. Días del mes siguiente (para completar la cuadrícula de 42 celdas)
   const remainingDays = 42 - days.length
   for (let i = 1; i <= remainingDays; i++) {
     const fullDate = new Date(pickerYear.value, pickerMonth.value + 1, i)
     fullDate.setHours(0, 0, 0, 0)
     
-    days.push({
-      date: i,
-      fullDate,
-      isCurrentMonth: false,
-      isSelected: isSameWeek(fullDate, selectedPickerDate.value),
-      isToday: fullDate.getTime() === today.getTime()
-    })
+    // Insertamos usando el helper
+    days.push(processDay(fullDate, false))
   }
   
   return days

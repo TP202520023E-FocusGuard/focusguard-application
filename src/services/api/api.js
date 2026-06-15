@@ -1,8 +1,8 @@
 // FABRICIO
-//const API_BASE = 'https://focusguard-api-d7ayede7fufnbshq.eastus-01.azurewebsites.net/api/v1';
+const API_BASE = 'https://focusguard-api-d7ayede7fufnbshq.eastus-01.azurewebsites.net/api/v1';
 
 // RAFAEL
- const API_BASE = 'http://127.0.0.1:8080/api/v1';
+// const API_BASE = 'http://127.0.0.1:8080/api/v1';
 
 async function handleResponse(response) {
     const data = await response.json().catch(() => null);

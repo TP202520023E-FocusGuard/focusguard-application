@@ -418,6 +418,11 @@ const nextMonth = () => {
 
 const selectWeek = (day) => {
   if (!day.fullDate) return
+  
+  if (day.isFuture) {
+    return 
+  }
+
   selectedPickerDate.value = day.fullDate
   const weekStart = getWeekStart(day.fullDate)
   currentAnchorDate.value = weekStart
@@ -885,6 +890,14 @@ onMounted(() => {
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
   margin-bottom: 16px;
+}
+
+.calendar-day.disabled-day {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  background-color: #f5f5f5 !important;
+  /* Desactiva los clics directamente desde el motor de renderizado del navegador */
+  pointer-events: none !important; 
 }
 
 .calendar-day {

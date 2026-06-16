@@ -45,12 +45,24 @@
     <!-- Slider elegante -->
     <v-slider
       v-model="leisureTime"
-      :min="15"
+      :min="0"
       :max="180"
-      :step="15"
+      :step="1"
       :color="currentColor"
       thumb-label
       class="mb-4"
+    />
+
+    <v-text-field
+      v-model.number="leisureTime"
+      type="number"
+      label="Minutos personalizados"
+      variant="outlined"
+      density="compact"
+      class="mb-4"
+      :min="0"
+      :max="180"
+      hide-details
     />
 
     <!-- Presets tipo pills -->
@@ -148,6 +160,17 @@ export default {
     }
   },
 
+  watch: {
+    leisureTime: {
+      handler(val) {
+        if (val === null || val === "") return;
+
+        if (val < 0) this.leisureTime = 0;
+        if (val > 180) this.leisureTime = 180;
+      }
+    }
+  },
+
   methods: {
     chipStyle(value) {
       return {
@@ -236,6 +259,7 @@ export default {
   mounted() {
     this.loadConfiguration();
   }
+
 };
 </script>
 

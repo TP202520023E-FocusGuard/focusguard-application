@@ -176,6 +176,8 @@ export const useAuthStore = defineStore("auth", {
         await apiService.getMe();
         return true;
       } catch (error) {
+        console.error("ERROR SESSION:", error);
+        console.error("MENSAJE:", error.message);
         this.logout();
         return false;
       }

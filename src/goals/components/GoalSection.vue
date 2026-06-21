@@ -20,7 +20,9 @@
           variant="outlined"
           rows="2"
           auto-grow
-          hide-details
+          maxlength="100"
+          counter="100"
+          hide-details="auto"
           class="goal-textarea compact-textarea"
           placeholder="Ej: Aprender Vue.js avanzado, Completar proyecto X..."
           color="primary"
@@ -107,25 +109,35 @@ export default {
     },
 
     async saveGoal() {
-      if (this.currentGoal.trim()) {
-        this.loading = true;
-        try {
-          const goalData = {
-            texto: this.currentGoal.trim()
-          };
+      const texto = this.currentGoal.trim();
 
-          const savedGoal = await goalsService.saveGoal(goalData);
+      if (!texto) {
+        return;
+      }
 
-          this.savedGoal = savedGoal.texto;
-          this.goalId = savedGoal.id;
-          this.currentGoal = '';
+      if (texto.length > 100) {
+        console.error('La meta no puede superar los 100 caracteres');
+        return;
+      }
 
-          this.$emit('goalSaved', this.savedGoal);
-        } catch (error) {
-          console.error('Error guardando meta:', error);
-        } finally {
-          this.loading = false;
-        }
+      this.loading = true;
+
+      try {
+        const goalData = {
+          texto
+        };
+
+        const savedGoal = await goalsService.saveGoal(goalData);
+
+        this.savedGoal = savedGoal.texto;
+        this.goalId = savedGoal.id;
+        this.currentGoal = '';
+
+        this.$emit('goalSaved', this.savedGoal);
+      } catch (error) {
+        console.error('Error guardando meta:', error);
+      } finally {
+        this.loading = false;
       }
     },
     
